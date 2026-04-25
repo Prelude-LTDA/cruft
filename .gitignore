@@ -1,0 +1,34 @@
+# SwiftPM
+.build/
+Package.resolved
+*.xcodeproj
+.swiftpm/
+
+# Build output
+build/
+
+# macOS
+.DS_Store
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Affinity Designer lock file (open document)
+*~lock~
+
+# AI coding tools (local state, chat history, per-user config)
+.claude/
+.cursor/
+.continue/
+.codeium/
+.windsurf/
+.cody/
+.cline/
+.roo/
+.aider*
