@@ -2564,10 +2564,13 @@ enum RuleCatalog {
                 links: []
             )
         ),
-        // Browser automation / binaries (live under .ai for "AI tooling" adjacency — they're heavy downloads)
+        // Browser-automation runners — they live in their own .browserAutomation
+        // bucket. Kept physically here because they share the same "heavy
+        // browser binary download under ~/Library/Caches" pattern as the AI
+        // model rules above; the ecosystem tag is what drives the UI grouping.
         Rule(
             id: "playwright.browsers", displayName: "Playwright browsers",
-            ecosystem: .ai, scope: .globalCache,
+            ecosystem: .browserAutomation, scope: .globalCache,
             matcher: .fixedPathChildren(relativeToHome: "Library/Caches/ms-playwright"),
             action: .trash, tier: .medium, aggregation: .none,
             notes: "Playwright versioned browser runtime binaries.",
@@ -2585,7 +2588,7 @@ enum RuleCatalog {
         ),
         Rule(
             id: "cypress.binary", displayName: "Cypress binary",
-            ecosystem: .ai, scope: .globalCache,
+            ecosystem: .browserAutomation, scope: .globalCache,
             matcher: .fixedPathChildren(relativeToHome: "Library/Caches/Cypress"),
             action: .trash, tier: .medium, aggregation: .none,
             notes: "Cypress bundled Electron browser binary cache.",
@@ -2604,7 +2607,7 @@ enum RuleCatalog {
         ),
         Rule(
             id: "puppeteer.browsers", displayName: "Puppeteer browser",
-            ecosystem: .ai, scope: .globalCache,
+            ecosystem: .browserAutomation, scope: .globalCache,
             matcher: .fixedPathGrandchildren(relativeToHome: ".cache/puppeteer"),
             action: .trash, tier: .medium, aggregation: .none,
             notes: "Puppeteer downloaded browser binary.",
@@ -2623,7 +2626,7 @@ enum RuleCatalog {
         ),
         Rule(
             id: "electron.binaries", displayName: "Electron binaries",
-            ecosystem: .ai, scope: .globalCache,
+            ecosystem: .node, scope: .globalCache,
             matcher: .fixedPath(relativeToHome: "Library/Caches/electron"),
             action: .trash, tier: .medium, aggregation: .none,
             notes: "Cached Electron runtime binaries shared across projects.",

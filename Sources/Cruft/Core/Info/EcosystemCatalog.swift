@@ -62,6 +62,17 @@ enum EcosystemCatalog {
             ]
         ),
         EcosystemInfo(
+            ecosystem: .browserAutomation,
+            displayName: "Browser Automation",
+            tagline: "End-to-end test runners that download and manage their own bundled browser binaries — typically multi-hundred-megabyte Chromium builds per version.",
+            description: "Tools like Playwright, Cypress, and Puppeteer drive real browsers programmatically for end-to-end testing and scripted scraping. Rather than relying on the user's installed browser, each tool downloads a pinned version of Chromium (and often Firefox / WebKit) into a per-user cache, so test runs are hermetic and reproducible across machines. These bundled browsers are large — typically 200 MB to 1 GB per version — and accumulate as the testing tool itself is upgraded.",
+            links: [
+                InfoLink(title: "Headless browser — Wikipedia", url: "https://en.wikipedia.org/wiki/Headless_browser", kind: .wiki),
+                InfoLink(title: "Playwright", url: "https://playwright.dev/", kind: .official),
+                InfoLink(title: "Cypress", url: "https://www.cypress.io/", kind: .official),
+            ]
+        ),
+        EcosystemInfo(
             ecosystem: .vm,
             displayName: "VMs & Containers",
             tagline: "Container engines and VM frameworks cache large disk images and layer stores that rebuild automatically but can consume significant space.",
