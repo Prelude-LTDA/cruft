@@ -5,8 +5,9 @@ import Foundation
 /// those); remaining hits are surfaced as "Spotlight-found" so the UI can
 /// dim them and the user can toggle the source on/off.
 ///
-/// NSMetadataQuery is not `Sendable`, so we tuck it inside an `@unchecked`
-/// box and only touch it on `@MainActor`.
+/// NSMetadataQuery is not `Sendable`, so it lives behind a `@MainActor` box
+/// and the observer pulls it out of `Notification.object` rather than
+/// capturing it directly (which would warn under strict concurrency).
 final class SpotlightProbe: Sendable {
     private let interestingNames: [String]
 
@@ -33,13 +34,20 @@ final class SpotlightProbe: Sendable {
                 let token = NotificationCenter.default.addObserver(
                     forName: .NSMetadataQueryDidFinishGathering,
                     object: query, queue: .main
-                ) { _ in
-                    for case let item as NSMetadataItem in query.results {
+                ) { note in
+                    // Read the query out of the notification rather than
+                    // capturing it from the enclosing scope — the observer
+                    // closure is `@Sendable` and NSMetadataQuery isn't,
+                    // so a direct capture trips the SendableClosureCaptures
+                    // warning. The block still runs on `.main` (queue:
+                    // .main above), so touching the query here is safe.
+                    guard let q = note.object as? NSMetadataQuery else { return }
+                    for case let item as NSMetadataItem in q.results {
                         if let path = item.value(forAttribute: NSMetadataItemPathKey) as? String {
                             continuation.yield(URL(fileURLWithPath: path))
                         }
                     }
-                    query.stop()
+                    q.stop()
                     continuation.finish()
                 }
                 box.token = token
