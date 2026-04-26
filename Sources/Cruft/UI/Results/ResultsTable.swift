@@ -1,35 +1,6 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Drag-to-Trash helper
-
-/// Makes a row draggable to the Dock's Trash (or any Finder location)
-/// when the finding's action is `.trash` and the row represents a
-/// single file. We deliberately skip rules with `.cleanCommand` /
-/// `.shellSudo` actions — their "right" cleanup isn't a plain trash
-/// (e.g. pnpm store hardlinks, ollama model manifests) — and skip
-/// aggregated rows, since a single drag item can only carry one URL.
-///
-/// Uses macOS 26's `DragConfiguration(allowDelete:)` to advertise
-/// `NSDragOperation.delete` on the drag session. SwiftUI's older
-/// `.onDrag { NSItemProvider(...) }` hard-codes the source operation
-/// mask to `.copy`, which is why the Dock Trash refused the drop and
-/// the drag proxy froze at the Dock icon before cancelling — the
-/// Trash specifically only accepts sources that include `.delete`.
-extension View {
-    @ViewBuilder
-    func draggableToTrashIfAllowed(_ finding: Finding) -> some View {
-        if case .trash = finding.action, finding.aggregatedCount <= 1 {
-            let url = URL(fileURLWithPath: finding.presentationPath)
-            self
-                .draggable(url)
-                .dragConfiguration(DragConfiguration(allowMove: true, allowDelete: true))
-        } else {
-            self
-        }
-    }
-}
-
 /// The main findings list. Two modes, toggled by `model.useProjectGrouping`:
 /// - Grouped: `List` with `Section` per project; shows project header rollup.
 /// - Flat: SwiftUI `Table` with sortable columns.
@@ -165,7 +136,6 @@ private struct FlatResults: View {
                     }
                 }
                 .opacity(finding.fromSpotlight ? 0.65 : 1.0)
-                .draggableToTrashIfAllowed(finding)
             }
             .width(min: 180, ideal: 500)
 
@@ -293,7 +263,6 @@ struct ResultRow: View {
         }
         .padding(.vertical, 4)
         .opacity(finding.fromSpotlight ? 0.65 : 1.0)
-        .draggableToTrashIfAllowed(finding)
     }
 }
 
