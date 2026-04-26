@@ -262,13 +262,20 @@ final class AppModel {
         let sink = StreamSink()
         scanTask = Task { [weak self] in
             guard let self else { return }
+            // Snapshot the history index once up front. Each finding gets
+            // tagged with its previous cleanup date (if any) before reaching
+            // the main actor, so the UI can show "Cleaned 4d ago" without
+            // re-entering the actor per row.
+            let cleanedIndex = await self.history.lastCleanedIndex()
 
             // 1. Discovery
             var pending: [Finding] = []
             var lastFlush = ContinuousClock.now
             for await finding in coord.stream() {
                 if Task.isCancelled { return }
-                pending.append(finding)
+                var enriched = finding
+                enriched.lastCleanedAt = cleanedIndex[finding.presentationPath]
+                pending.append(enriched)
                 let now = ContinuousClock.now
                 if pending.count >= 25 || now - lastFlush > .milliseconds(120) {
                     let batch = pending; pending.removeAll(keepingCapacity: true)

@@ -154,6 +154,20 @@ private struct FlatResults: View {
             }
             .width(min: 80, ideal: 150)
 
+            TableColumn("Last Cleaned", value: \.lastCleanedSortKey) { finding in
+                // Empty (rather than "—") for never-cleaned rows: most rows
+                // start unclean, and a column full of dashes reads as noise.
+                if let cleaned = finding.lastCleanedAt {
+                    Text(DateDisplay.relativeText(cleaned))
+                        .font(.caption).foregroundStyle(.secondary)
+                        .help(DateDisplay.absoluteText(cleaned))
+                        .opacity(finding.fromSpotlight ? 0.65 : 1.0)
+                } else {
+                    Text("")
+                }
+            }
+            .width(min: 80, ideal: 150)
+
             TableColumn("Size", value: \.sizeSortKey) { finding in
                 HStack {
                     Spacer(minLength: 0)
@@ -249,6 +263,21 @@ struct ResultRow: View {
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)
                         .help(DateDisplay.absoluteText(finding.modified))
+                    if let cleaned = finding.lastCleanedAt {
+                        Text("·").foregroundStyle(.tertiary)
+                        // Manual HStack instead of `Label` — Label's icon/title
+                        // gap is wider than the inline cadence of this row, and
+                        // labelStyle doesn't expose a knob for it.
+                        HStack(spacing: 3) {
+                            Image(systemName: "clock.arrow.circlepath")
+                            Text("Last cleaned " + DateDisplay.relativeText(cleaned))
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .help("Last cleaned via Cruft on \(DateDisplay.absoluteText(cleaned))")
+                    }
                 }
             }
             Spacer()

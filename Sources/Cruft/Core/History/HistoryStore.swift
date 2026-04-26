@@ -22,6 +22,10 @@ actor HistoryStore {
     private let url: URL
     private var cache: [HistoryEntry] = []
     private var loaded = false
+    /// `presentationPath → most-recent cleanup timestamp` index. Built lazily
+    /// from `cache` on first request, invalidated on every `append`. Lets the
+    /// UI tag each finding with "Cleaned N ago" via O(1) lookup at scan time.
+    private var pathIndex: [String: Date]?
 
     init() {
         let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
@@ -32,8 +36,15 @@ actor HistoryStore {
 
     func load() -> [HistoryEntry] {
         if !loaded {
+            // Decoder strategy must match `persist()` — we write ISO8601 so
+            // history.json stays human-readable. A default JSONDecoder
+            // expects .deferredToDate (seconds-since-2001 doubles) and
+            // would silently fail the whole decode, leaving cache empty
+            // across launches.
+            let dec = JSONDecoder()
+            dec.dateDecodingStrategy = .iso8601
             if let data = try? Data(contentsOf: url),
-               let entries = try? JSONDecoder().decode([HistoryEntry].self, from: data) {
+               let entries = try? dec.decode([HistoryEntry].self, from: data) {
                 cache = entries
             }
             loaded = true
@@ -44,14 +55,23 @@ actor HistoryStore {
     func append(_ entries: [HistoryEntry]) {
         _ = load()
         cache.append(contentsOf: entries)
+        pathIndex = nil
         persist()
     }
 
-    func undoable() -> [HistoryEntry] {
-        // The most recent session's trash-method entries whose trashedTo still
-        // exists. Caller is expected to filter further if they want per-item.
+    /// Snapshot of the most-recent cleanup date for every path ever cleaned.
+    /// Returned by value — caller takes one snapshot at scan-start and
+    /// enriches each finding against it without re-entering the actor.
+    func lastCleanedIndex() -> [String: Date] {
+        if let idx = pathIndex { return idx }
         _ = load()
-        return cache.filter { $0.method == .trash && $0.trashedTo != nil }
+        var idx: [String: Date] = [:]
+        for e in cache {
+            if let prev = idx[e.path], prev >= e.timestamp { continue }
+            idx[e.path] = e.timestamp
+        }
+        pathIndex = idx
+        return idx
     }
 
     private func persist() {

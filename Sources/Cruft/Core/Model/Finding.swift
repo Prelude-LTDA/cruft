@@ -60,6 +60,12 @@ struct Finding: Sendable, Hashable, Identifiable {
     /// How to interpret `size` in the UI. Nil = exact reclaim.
     var sizeHint: SizeHint? = nil
 
+    /// Most recent date this exact path was cleaned via Cruft, or nil if
+    /// there's no record. Populated at scan-ingest time from the
+    /// HistoryStore index. Surfaces as a "Cleaned N ago" hint in rows so
+    /// the user knows this isn't first-time bloat.
+    var lastCleanedAt: Date? = nil
+
     var displayName: String {
         URL(fileURLWithPath: presentationPath).lastPathComponent
     }
@@ -77,6 +83,10 @@ extension Finding {
 
     var sizeSortKey: Int64 { size ?? 0 }
     var modifiedSortKey: Date { modified ?? .distantPast }
+    /// Sort key for the "Last Cleaned" column. Never-cleaned items coalesce
+    /// to `.distantPast` so they sink to the bottom of a descending sort
+    /// (the natural "show recently cleaned first" order).
+    var lastCleanedSortKey: Date { lastCleanedAt ?? .distantPast }
     /// Type column sorts by the rule's displayName, falling back to the raw
     /// rule id when a rule is missing (should not happen in practice).
     var typeSortKey: String {
