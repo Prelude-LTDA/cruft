@@ -18,8 +18,9 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
                             // think about them as SSGs first.
     case ide                // Editors & IDE caches
     case ai                 // LLM runtimes + ML caches + image-gen
+    case aiCodingAgent      // Claude Code / Codex CLI / Aider / Continue / Cline / etc.
     case browserAutomation  // Playwright / Cypress / Puppeteer — bundled browser binaries
-    case vm                 // Docker / OrbStack / Tart
+    case vm                 // Docker / OrbStack / Tart / Lima / Vagrant / VirtualBox / ...
 
     var id: String { rawValue }
 
@@ -44,6 +45,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .ssg: "Static Site Generators"
         case .ide: "Editors & IDEs"
         case .ai: "Local AI & ML"
+        case .aiCodingAgent: "AI Coding Agents"
         case .browserAutomation: "Browser Automation"
         case .vm: "VMs & Containers"
         }
@@ -71,6 +73,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .ssg: Color(red: 0xE9/255, green: 0x4B/255, blue: 0xA6/255)  // publishing magenta
         case .ide: Color(red: 0x4C/255, green: 0x5A/255, blue: 0x76/255)
         case .ai: Color(red: 0x63/255, green: 0x63/255, blue: 0xF1/255)  // indigo-500
+        case .aiCodingAgent: Color(red: 0xF4/255, green: 0x3F/255, blue: 0x5E/255)  // rose-500
         case .browserAutomation: Color(red: 0x14/255, green: 0xB8/255, blue: 0xA6/255)  // teal-500
         case .vm: Color(red: 0x24/255, green: 0x96/255, blue: 0xED/255)
         }
@@ -98,6 +101,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .ssg: "doc.richtext"
         case .ide: "text.alignleft"
         case .ai: "sparkles"
+        case .aiCodingAgent: "bubble.and.pencil"
         case .browserAutomation: "cursorarrow.click.2"
         case .vm: "cube.box.fill"
         }
@@ -125,6 +129,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .ssg: ""                       // per-rule override (hugo/gatsby/zola/…)
         case .ide: ""
         case .ai: ""
+        case .aiCodingAgent: ""
         case .browserAutomation: ""
         case .vm: "docker"
         }

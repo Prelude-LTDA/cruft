@@ -197,6 +197,39 @@ enum ToolCatalog {
             ]
         ),
 
+        ToolInfo(
+            key: "nvm",
+            displayName: "nvm",
+            tagline: "Node Version Manager — installs and switches between multiple Node.js versions per shell session.",
+            description: "nvm is a shell-based Node.js version manager that downloads pre-built Node.js binaries into `~/.nvm/versions/node/<version>/` and switches the active version by adjusting `PATH`. Per-project versions can be pinned via a `.nvmrc` file. Each installed version is a self-contained directory containing the Node.js binary, npm, and bundled documentation.",
+            languageKey: "javascript",
+            links: [
+                InfoLink(title: "nvm — GitHub", url: "https://github.com/nvm-sh/nvm", kind: .official),
+            ]
+        ),
+
+        ToolInfo(
+            key: "fnm",
+            displayName: "fnm",
+            tagline: "Fast Node Manager — a Rust-implemented alternative to nvm with shell hooks for per-directory version switching.",
+            description: "fnm (Fast Node Manager) is written in Rust rather than as shell scripts, which reduces shell-startup overhead compared to nvm. It installs Node.js versions under `~/Library/Application Support/fnm/node-versions/` (or a configurable location) and supports `.nvmrc` and `.node-version` files for per-project version pinning. Shell integration switches automatically when entering a directory with a pinned version.",
+            languageKey: "javascript",
+            links: [
+                InfoLink(title: "fnm — GitHub", url: "https://github.com/Schniz/fnm", kind: .official),
+            ]
+        ),
+
+        ToolInfo(
+            key: "n",
+            displayName: "n",
+            tagline: "TJ Holowaychuk's minimalist Node.js version manager — a single shell script with no shell-init magic.",
+            description: "`n` is a small Node.js version manager implemented as a single shell script. It installs Node.js versions into `$N_PREFIX/n/versions/node/<version>/` (defaulting to `/usr/local`) and switches the active version by replacing the system Node.js binary symlink. Unlike nvm and fnm, `n` does not require shell hooks or configuration.",
+            languageKey: "javascript",
+            links: [
+                InfoLink(title: "n — GitHub", url: "https://github.com/tj/n", kind: .official),
+            ]
+        ),
+
         // MARK: - Python
 
         ToolInfo(
@@ -321,6 +354,17 @@ enum ToolCatalog {
             ]
         ),
 
+        ToolInfo(
+            key: "chruby",
+            displayName: "chruby",
+            tagline: "Minimalist Ruby version switcher — a small shell function rather than a wrapper binary.",
+            description: "chruby is a Ruby version switcher implemented as a small set of shell functions. It locates installed interpreters under `~/.rubies/` (or `/opt/rubies/`) and switches between them by editing `PATH` and `GEM_HOME`. It does not install Rubies itself — that is left to a companion tool like `ruby-install`.",
+            languageKey: "ruby",
+            links: [
+                InfoLink(title: "chruby — GitHub", url: "https://github.com/postmodern/chruby", kind: .official),
+            ]
+        ),
+
         // MARK: - Go
 
         ToolInfo(
@@ -387,6 +431,18 @@ enum ToolCatalog {
                 InfoLink(title: "NuGet", url: "https://www.nuget.org", kind: .official),
                 InfoLink(title: "NuGet — what is NuGet", url: "https://learn.microsoft.com/en-us/nuget/what-is-nuget", kind: .docs),
                 InfoLink(title: "NuGet — Wikipedia", url: "https://en.wikipedia.org/wiki/NuGet", kind: .wiki),
+            ]
+        ),
+
+        ToolInfo(
+            key: "omnisharp",
+            displayName: "OmniSharp",
+            tagline: "Open-source language server that powers C# and F# editor support outside Visual Studio.",
+            description: "OmniSharp provides IntelliSense, refactoring, navigation, and diagnostics for C# and F# projects in editors like VS Code, Vim, Emacs, and Sublime Text. It runs as a background process per workspace and caches project metadata, NuGet asset graphs, and Roslyn analyzer state under a per-user directory.",
+            languageKey: "dotnet",
+            links: [
+                InfoLink(title: "OmniSharp", url: "https://www.omnisharp.net/", kind: .official),
+                InfoLink(title: "OmniSharp — GitHub", url: "https://github.com/OmniSharp/omnisharp-roslyn", kind: .official),
             ]
         ),
 
@@ -457,6 +513,17 @@ enum ToolCatalog {
             ]
         ),
 
+        ToolInfo(
+            key: "carthage",
+            displayName: "Carthage",
+            tagline: "Decentralised dependency manager for Swift and Objective-C — builds dependencies as standalone frameworks.",
+            description: "Carthage builds project dependencies as XCFrameworks (or `.framework` bundles) and leaves the integration into the Xcode project up to the developer. Sources are cloned into a global `~/Library/Caches/org.carthage.CarthageKit/` cache and into a project-local `Carthage/` directory. Carthage was widely used before Swift Package Manager matured but remains in active use for projects that need its build model.",
+            languageKey: "swift",
+            links: [
+                InfoLink(title: "Carthage — GitHub", url: "https://github.com/Carthage/Carthage", kind: .official),
+            ]
+        ),
+
         // MARK: - C / C++
 
         ToolInfo(
@@ -494,6 +561,19 @@ enum ToolCatalog {
                 InfoLink(title: "vcpkg", url: "https://vcpkg.io/en/", kind: .official),
                 InfoLink(title: "vcpkg — Microsoft Learn", url: "https://learn.microsoft.com/en-us/vcpkg/", kind: .docs),
                 InfoLink(title: "vcpkg — Wikipedia", url: "https://en.wikipedia.org/wiki/Vcpkg", kind: .wiki),
+            ]
+        ),
+
+        ToolInfo(
+            key: "ccache",
+            displayName: "ccache",
+            tagline: "Compiler cache for C and C++ — speeds up rebuilds by reusing object files when the inputs haven't changed.",
+            description: "ccache wraps `gcc`, `clang`, and other C/C++ compilers, hashing each compilation's inputs (source, flags, headers) and serving previous outputs from a local cache when the hash matches. Cache entries are kept under `~/.cache/ccache/` (or `~/Library/Caches/ccache/`). Build correctness is preserved: a hash mismatch falls through to the real compiler.",
+            languageKey: "cpp",
+            links: [
+                InfoLink(title: "ccache", url: "https://ccache.dev/", kind: .official),
+                InfoLink(title: "ccache — manual", url: "https://ccache.dev/manual/latest.html", kind: .docs),
+                InfoLink(title: "Ccache — Wikipedia", url: "https://en.wikipedia.org/wiki/Ccache", kind: .wiki),
             ]
         ),
 
@@ -536,6 +616,18 @@ enum ToolCatalog {
                 InfoLink(title: "Nix", url: "https://nixos.org", kind: .official),
                 InfoLink(title: "Nix — reference manual", url: "https://nix.dev/manual/nix/stable/", kind: .docs),
                 InfoLink(title: "Nix (package manager) — Wikipedia", url: "https://en.wikipedia.org/wiki/Nix_(package_manager)", kind: .wiki),
+            ]
+        ),
+
+        ToolInfo(
+            key: "asdf",
+            displayName: "asdf",
+            tagline: "Multi-language version manager — replaces per-language tools like rbenv, nvm, and pyenv with a single CLI driven by plugins.",
+            description: "asdf manages installed runtimes for many languages through a plugin system: `asdf plugin add <name>` registers support for a language, and `asdf install <name> <version>` installs that interpreter under `~/.asdf/installs/<plugin>/<version>/`. Per-project versions are pinned via a `.tool-versions` file. Each installed runtime is a self-contained directory.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "asdf", url: "https://asdf-vm.com/", kind: .official),
+                InfoLink(title: "asdf — GitHub", url: "https://github.com/asdf-vm/asdf", kind: .official),
             ]
         ),
 
@@ -692,6 +784,33 @@ enum ToolCatalog {
             links: [
                 InfoLink(title: "Hex", url: "https://hex.pm", kind: .official),
                 InfoLink(title: "Hex — Mix tasks", url: "https://hexdocs.pm/hex/Mix.Tasks.Hex.html", kind: .docs),
+            ]
+        ),
+
+        ToolInfo(
+            key: "rebar3",
+            displayName: "rebar3",
+            tagline: "The standard build tool for Erlang — handles dependencies, compilation, releases, and tests via the `rebar3` CLI.",
+            description: "rebar3 is the canonical build tool for Erlang/OTP projects, defined by `rebar.config`. It resolves dependencies via Hex, compiles `.erl` source to BEAM bytecode, and builds OTP releases. Build artifacts and downloaded dependencies live in `_build/` per project, while a global cache under `~/.cache/rebar3/` stores fetched packages and compiled artifacts shared across projects.",
+            languageKey: "elixir",
+            links: [
+                InfoLink(title: "rebar3", url: "https://rebar3.org/", kind: .official),
+                InfoLink(title: "rebar3 — documentation", url: "https://rebar3.org/docs/", kind: .docs),
+                InfoLink(title: "rebar3 — GitHub", url: "https://github.com/erlang/rebar3", kind: .official),
+            ]
+        ),
+
+        // MARK: - Haskell
+
+        ToolInfo(
+            key: "ghcup",
+            displayName: "ghcup",
+            tagline: "Universal installer for the Haskell toolchain — manages GHC compilers, Cabal, Stack, and HLS installations.",
+            description: "ghcup is the standard installer for Haskell on macOS and Linux: a single CLI that downloads and switches between GHC compiler versions, Cabal, Stack, and the Haskell Language Server. Installed toolchains live under `~/.ghcup/ghc/` and shared download caches under `~/.ghcup/cache/`. Per-project compiler versions can be pinned via a `cabal.project` or shell tooling.",
+            languageKey: "haskell",
+            links: [
+                InfoLink(title: "ghcup", url: "https://www.haskell.org/ghcup/", kind: .official),
+                InfoLink(title: "ghcup — GitLab", url: "https://gitlab.haskell.org/haskell/ghcup-hs", kind: .official),
             ]
         ),
 
@@ -978,6 +1097,233 @@ enum ToolCatalog {
                 InfoLink(title: "Cypress — why Cypress", url: "https://docs.cypress.io/app/get-started/why-cypress", kind: .docs),
                 InfoLink(title: "Cypress — installation", url: "https://docs.cypress.io/app/get-started/install-cypress", kind: .docs),
                 InfoLink(title: "Cypress (software) — Wikipedia", url: "https://en.wikipedia.org/wiki/Cypress_(software)", kind: .wiki),
+            ]
+        ),
+
+        // MARK: - VMs & Containers
+
+        ToolInfo(
+            key: "orbstack",
+            displayName: "OrbStack",
+            tagline: "Native macOS Docker / Linux / Kubernetes runtime built on Apple's Virtualization framework, positioned as an alternative to Docker Desktop on Apple Silicon.",
+            description: "OrbStack runs containers and Linux machines via Apple's Virtualization framework, with support for Docker, Kubernetes, and full Linux distros side by side. The whole runtime — every image, container, volume, and Linux machine — is backed by a single sparse virtualization disk image (`data.img.raw`), which can grow to tens of gigabytes as state accumulates.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "OrbStack", url: "https://orbstack.dev/", kind: .official),
+                InfoLink(title: "OrbStack — documentation", url: "https://docs.orbstack.dev/", kind: .docs),
+            ]
+        ),
+
+        ToolInfo(
+            key: "vagrant",
+            displayName: "Vagrant",
+            tagline: "HashiCorp's declarative VM provisioning tool — wraps VirtualBox, Parallels, VMware, and other providers behind a `Vagrantfile`.",
+            description: "Vagrant lets developers describe a reproducible VM environment in a `Vagrantfile`, then spin it up against a chosen provider (VirtualBox by default on macOS, with Parallels and VMware as alternatives). It maintains two distinct caches: a global library of downloaded \"boxes\" (base VM templates, multi-GB each) under `~/.vagrant.d/boxes/`, and a per-project `.vagrant/` directory containing the live cloned VM state.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "Vagrant", url: "https://www.vagrantup.com/", kind: .official),
+                InfoLink(title: "Vagrant — documentation", url: "https://developer.hashicorp.com/vagrant/docs", kind: .docs),
+                InfoLink(title: "Vagrant (software) — Wikipedia", url: "https://en.wikipedia.org/wiki/Vagrant_(software)", kind: .wiki),
+            ]
+        ),
+
+        ToolInfo(
+            key: "virtualbox",
+            displayName: "VirtualBox",
+            tagline: "Oracle's open-source x86 / AMD64 virtualization hypervisor — the long-running cross-platform desktop VM solution.",
+            description: "VirtualBox runs guest operating systems as VMs on top of a host. On macOS it works with Intel hosts and (with experimental Apple Silicon builds) ARM64. Each VM lives in its own directory under `~/VirtualBox VMs/<name>/`, holding the disk images (`.vdi` / `.vmdk`), config (`.vbox`), snapshots, and logs. Global registry and host-only network state is stored separately in `~/Library/VirtualBox/`.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "VirtualBox", url: "https://www.virtualbox.org/", kind: .official),
+                InfoLink(title: "VirtualBox — manual", url: "https://www.virtualbox.org/manual/", kind: .docs),
+                InfoLink(title: "VirtualBox — Wikipedia", url: "https://en.wikipedia.org/wiki/VirtualBox", kind: .wiki),
+            ]
+        ),
+
+        ToolInfo(
+            key: "utm",
+            displayName: "UTM",
+            tagline: "Open-source QEMU and Apple Virtualization frontend for macOS — popular on Apple Silicon for running Windows, Linux, and other architectures.",
+            description: "UTM is a graphical macOS application that wraps QEMU (full emulation, any architecture) and Apple's Virtualization framework (paravirtualized ARM64 guests, fast). VMs are stored as `.utm` bundles under UTM's sandboxed Container directory, each containing the qcow2 disk(s), NVRAM/EFI variables, and configuration plist. The bundles are fully self-contained and can be moved between machines.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "UTM", url: "https://getutm.app/", kind: .official),
+                InfoLink(title: "UTM — documentation", url: "https://docs.getutm.app/", kind: .docs),
+                InfoLink(title: "UTM — GitHub", url: "https://github.com/utmapp/UTM", kind: .official),
+            ]
+        ),
+
+        ToolInfo(
+            key: "vmware-fusion",
+            displayName: "VMware Fusion",
+            tagline: "Broadcom/VMware's commercial Mac virtualization suite — runs Windows, Linux, and other guests on Intel and Apple Silicon hosts.",
+            description: "VMware Fusion is the macOS member of the VMware desktop hypervisor family (alongside Workstation on Linux/Windows). Each VM is a `.vmwarevm` bundle containing the `.vmdk` disk(s), `.nvram`, `.vmx` config, and any snapshots. Fusion became free for personal use in 2024 and free for all use, including commercial, in 2025.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "VMware Fusion", url: "https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion", kind: .official),
+                InfoLink(title: "VMware Fusion — Wikipedia", url: "https://en.wikipedia.org/wiki/VMware_Fusion", kind: .wiki),
+            ]
+        ),
+
+        ToolInfo(
+            key: "parallels",
+            displayName: "Parallels Desktop",
+            tagline: "Commercial macOS virtualization application — runs Linux, Windows, and (on Apple Silicon) macOS guest VMs, with long-standing focus on Windows-on-Mac integration.",
+            description: "Parallels Desktop runs guest VMs with host integration features such as Coherence mode (rendering Windows apps as host-window peers) and shared folders between guest and host. VMs are stored as `.pvm` bundles (Linux/Windows) or `.macvm` bundles (macOS guests on Apple Silicon) under `~/Parallels/`. The App Store edition uses a different Group Container path for sandboxing reasons.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "Parallels Desktop", url: "https://www.parallels.com/products/desktop/", kind: .official),
+                InfoLink(title: "Parallels — knowledge base", url: "https://kb.parallels.com/", kind: .docs),
+                InfoLink(title: "Parallels Desktop — Wikipedia", url: "https://en.wikipedia.org/wiki/Parallels_Desktop_for_Mac", kind: .wiki),
+            ]
+        ),
+
+        ToolInfo(
+            key: "lima",
+            displayName: "Lima",
+            tagline: "Linux-on-Mac VM manager that powers tools like Colima and Rancher Desktop — uses Apple's Virtualization framework or QEMU.",
+            description: "Lima (\"Linux Machines\") provisions and manages headless Linux VMs on macOS, configurable via YAML files. Each instance lives under `~/.lima/<instance>/` with its disk image, cloud-init config, and runtime sockets. Cached cloud-image downloads (Ubuntu, Fedora, Alpine, etc.) are kept under `~/Library/Caches/lima/download/`, keyed by URL hash for reuse.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "Lima", url: "https://lima-vm.io/", kind: .official),
+                InfoLink(title: "Lima — internals", url: "https://lima-vm.io/docs/dev/internals/", kind: .docs),
+                InfoLink(title: "Lima — GitHub", url: "https://github.com/lima-vm/lima", kind: .official),
+            ]
+        ),
+
+        ToolInfo(
+            key: "colima",
+            displayName: "Colima",
+            tagline: "Container runtime for macOS built on top of Lima — an open-source alternative to Docker Desktop.",
+            description: "Colima runs containers (Docker, containerd, Kubernetes via k3s) inside a Lima-managed Linux VM. Each profile gets its own Lima VM under `~/.colima/_lima/<profile>/`; the VM's disk holds every OCI image, container, and named volume. Since v0.9.0 the container-runtime data lives on a separate disk, so `colima delete --data` can wipe just container state without re-provisioning the VM.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "Colima — GitHub", url: "https://github.com/abiosoft/colima", kind: .official),
+            ]
+        ),
+
+        // MARK: - AI coding agents
+
+        ToolInfo(
+            key: "claude-code",
+            displayName: "Claude Code",
+            tagline: "Anthropic's official terminal coding agent for the Claude family of models.",
+            description: "Claude Code is a terminal-resident agentic coding tool from Anthropic. It executes file edits, shell commands, and multi-step plans against the user's working directory, and persists each session as a JSONL transcript so conversations can be resumed across runs. It also ships an in-IDE companion for VS Code and JetBrains.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "Claude Code", url: "https://platform.claude.com/docs/en/docs/agents/claude-code/overview", kind: .official),
+                InfoLink(title: "Claude Code — GitHub", url: "https://github.com/anthropics/claude-code", kind: .official),
+            ]
+        ),
+
+        ToolInfo(
+            key: "codex-cli",
+            displayName: "OpenAI Codex CLI",
+            tagline: "OpenAI's open-source command-line coding agent.",
+            description: "Codex CLI is OpenAI's official terminal agent, built around the company's `gpt-codex` family of coding models. It edits files, runs commands inside a sandbox, and supports session resume via local JSONL `rollout` files. Released as open source on GitHub and configurable via the `CODEX_HOME` environment variable.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "OpenAI Codex CLI", url: "https://developers.openai.com/codex/cli", kind: .official),
+                InfoLink(title: "OpenAI Codex CLI — GitHub", url: "https://github.com/openai/codex", kind: .official),
+            ]
+        ),
+
+        ToolInfo(
+            key: "opencode",
+            displayName: "OpenCode",
+            tagline: "Open-source terminal coding agent from SST, designed as a model-agnostic alternative to closed-source CLIs.",
+            description: "OpenCode is an open-source TUI coding agent maintained by the SST team. It runs in the terminal and supports many model backends (Claude, OpenAI, Google, local models via Ollama, and others), positioned as an alternative to closed-source agents like Claude Code and Codex CLI. On macOS it follows the XDG Base Directory layout, storing session data under `~/.local/share/opencode/`.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "OpenCode", url: "https://opencode.ai/", kind: .official),
+                InfoLink(title: "OpenCode — documentation", url: "https://opencode.ai/docs", kind: .docs),
+                InfoLink(title: "OpenCode — GitHub", url: "https://github.com/sst/opencode", kind: .official),
+            ]
+        ),
+
+        ToolInfo(
+            key: "gemini-cli",
+            displayName: "Gemini CLI",
+            tagline: "Google's open-source command-line agent for Gemini models.",
+            description: "Gemini CLI is Google's terminal coding assistant for the Gemini family of models. It supports multi-step file edits, shell commands, and codebase reasoning, sharing the same model and tool stack as Gemini Code Assist in supported IDEs. Released under google-gemini/gemini-cli on GitHub.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "Gemini CLI — GitHub", url: "https://github.com/google-gemini/gemini-cli", kind: .official),
+                InfoLink(title: "Gemini for developers", url: "https://ai.google.dev/gemini-api/docs", kind: .docs),
+            ]
+        ),
+
+        ToolInfo(
+            key: "aider",
+            displayName: "Aider",
+            tagline: "Open-source pair-programming CLI built around git as the system of record.",
+            description: "Aider is a terminal coding assistant that records every model-generated change as a git commit, so the entire session is reversible with standard git tooling. It builds a `repo map` from ctags and treesitter so the model can reason about the wider codebase, and supports many model backends (OpenAI, Anthropic, Gemini, local models via Ollama).",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "Aider", url: "https://aider.chat/", kind: .official),
+                InfoLink(title: "Aider — repo map", url: "https://aider.chat/docs/repomap.html", kind: .docs),
+                InfoLink(title: "Aider — GitHub", url: "https://github.com/Aider-AI/aider", kind: .official),
+            ]
+        ),
+
+        ToolInfo(
+            key: "continue",
+            displayName: "Continue",
+            tagline: "Open-source AI assistant that runs as a VS Code and JetBrains extension.",
+            description: "Continue adds chat, autocomplete, and codebase-aware retrieval to VS Code and JetBrains IDEs. It supports multiple model backends and stores per-workspace LanceDB embeddings under `~/.continue/index/` so completions and chat answers can be grounded in the user's actual code.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "Continue", url: "https://www.continue.dev/", kind: .official),
+                InfoLink(title: "Continue — GitHub", url: "https://github.com/continuedev/continue", kind: .official),
+            ]
+        ),
+
+        ToolInfo(
+            key: "cline",
+            displayName: "Cline",
+            tagline: "Open-source autonomous coding agent that runs as a VS Code extension.",
+            description: "Cline (originally Claude Dev) performs multi-step coding tasks inside VS Code, requiring user approval for each tool call. After every action it captures a shadow-git checkpoint so any change can be rolled back, which can grow to multi-gigabyte sizes on large repos.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "Cline", url: "https://cline.bot/", kind: .official),
+                InfoLink(title: "Cline — checkpoints", url: "https://docs.cline.bot/features/checkpoints", kind: .docs),
+                InfoLink(title: "Cline — GitHub", url: "https://github.com/cline/cline", kind: .official),
+            ]
+        ),
+
+        ToolInfo(
+            key: "goose",
+            displayName: "Goose",
+            tagline: "Open-source extensible AI agent framework from Block.",
+            description: "Goose is an on-machine AI agent developed by Block (Square / Cash App). It uses Model Context Protocol (MCP) servers as its extension mechanism, ships both an interactive desktop app and a CLI, and is designed to be model-agnostic.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "Goose", url: "https://block.github.io/goose/", kind: .official),
+                InfoLink(title: "Goose — GitHub", url: "https://github.com/block/goose", kind: .official),
+            ]
+        ),
+
+        ToolInfo(
+            key: "windsurf",
+            displayName: "Windsurf",
+            tagline: "Standalone IDE from Codeium with an integrated AI agent and inline completions, built on a forked VS Code base.",
+            description: "Windsurf is Codeium's standalone coding IDE. Its agent (Cascade) and inline completions ship in-app, backed by the Codeium daemon and on-disk indexes of any open codebase. Codeium also offers extension-only versions for stock VS Code and JetBrains, separate from the Windsurf application.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "Windsurf", url: "https://windsurf.com/", kind: .official),
+                InfoLink(title: "Windsurf — documentation", url: "https://docs.windsurf.com/", kind: .docs),
+            ]
+        ),
+
+        ToolInfo(
+            key: "openhands",
+            displayName: "OpenHands",
+            tagline: "Open-source platform for running autonomous coding agents in a sandboxed Docker runtime (formerly OpenDevin).",
+            description: "OpenHands runs AI agents that can execute code, browse the web, and run shell commands inside a sandboxed Docker runtime. It supports many model backends and ships as a Docker image plus a web UI and CLI for issuing tasks. Originally developed under the name OpenDevin before being renamed.",
+            languageKey: nil,
+            links: [
+                InfoLink(title: "OpenHands — documentation", url: "https://docs.openhands.dev/", kind: .docs),
+                InfoLink(title: "OpenHands — GitHub", url: "https://github.com/All-Hands-AI/OpenHands", kind: .official),
             ]
         ),
     ]

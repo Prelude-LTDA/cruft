@@ -20,7 +20,7 @@ Additionally, you might want to learn what the specific paths are, what ecosyste
 
 ## Features
 
-- Locates files created by 20+ popular ecosystems — see [Supported ecosystems](#supported-ecosystems) below
+- Locates files created by 20+ popular development ecosystems — see [Supported ecosystems](#supported-ecosystems) below
 - Ranks files by regeneration effort/time, so you can choose the depth of cleanup desired
 - Provides instructive explanations about each location, tool, language and ecosystem with documentation references
 - Runs appropriate cleanup scripts where applicable
@@ -49,8 +49,9 @@ Additionally, you might want to learn what the specific paths are, what ecosyste
 - **Static site generators** — Hugo, Jekyll, Zola, MkDocs, Pelican, Eleventy, Hexo, Gatsby, Docusaurus
 - **Editors & IDEs** — VS Code (+ Insiders), Cursor, Zed, JetBrains, Neovim (+ coc-nvim, mason), Emacs (+ Doom Emacs), Sublime Text, Helix, Nova, plus language servers (rust-analyzer, sourcekit-lsp, jdtls)
 - **Local AI & ML** — Ollama, LM Studio, Jan, Hugging Face, InvokeAI, DiffusionBee, PyTorch, TensorFlow, Keras, fastai, MLX, Ultralytics
+- **AI coding agents** — Claude Code, OpenAI Codex CLI, Gemini CLI, OpenCode, Aider, Continue, Cline, Goose, Windsurf / Codeium, OpenHands (chat transcripts, embedding indexes, shadow git checkpoints)
 - **Browser automation** — Playwright, Cypress, Puppeteer (bundled Chromium / Firefox / WebKit binaries)
-- **VMs & containers** — Docker Desktop, Tart
+- **VMs & containers** — Docker Desktop, OrbStack, Vagrant, VirtualBox, UTM, VMware Fusion, Parallels, Lima, Colima, Tart
 
 ## Dev instructions
 

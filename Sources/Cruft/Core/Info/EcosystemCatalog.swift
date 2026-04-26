@@ -62,6 +62,17 @@ enum EcosystemCatalog {
             ]
         ),
         EcosystemInfo(
+            ecosystem: .aiCodingAgent,
+            displayName: "AI Coding Agents",
+            tagline: "Terminal- and editor-resident coding assistants that record long-running session transcripts, embedding indexes, and shadow git checkpoints in user-owned directories.",
+            description: "Agentic coding tools like Claude Code, OpenAI Codex CLI, Google Gemini CLI, GitHub Copilot CLI, and the open-source OpenCode accumulate two distinct kinds of state on disk. Chat transcripts record the back-and-forth with the model and are irreversible if deleted, often the only surviving record of weeks of pair-programming work. Operational caches — codebase embedding indexes, repo-map ctags, shadow git worktrees for checkpoints, downloaded helper binaries — regenerate automatically on next use. Shadow checkpoints in particular can grow to multi-gigabyte sizes on large monorepos.",
+            links: [
+                InfoLink(title: "AI agent — Wikipedia", url: "https://en.wikipedia.org/wiki/Intelligent_agent", kind: .wiki),
+                InfoLink(title: "Claude Code", url: "https://platform.claude.com/docs/en/docs/agents/claude-code/overview", kind: .official),
+                InfoLink(title: "OpenAI Codex CLI", url: "https://developers.openai.com/codex/cli", kind: .official),
+            ]
+        ),
+        EcosystemInfo(
             ecosystem: .browserAutomation,
             displayName: "Browser Automation",
             tagline: "End-to-end test runners that download and manage their own bundled browser binaries — typically multi-hundred-megabyte Chromium builds per version.",

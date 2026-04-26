@@ -24,6 +24,7 @@ enum RuleCatalog {
         out.append(contentsOf: otherLangs)
         out.append(contentsOf: ssg)
         out.append(contentsOf: ai)
+        out.append(contentsOf: aiCodingAgents)
         out.append(contentsOf: vm)
         out.append(contentsOf: ide)
         out.append(contentsOf: bazel)
@@ -291,6 +292,7 @@ enum RuleCatalog {
             notes: "nvm-managed Node.js runtime installation.",
             iconAsset: "nodejs-icon",
             languageKey: "javascript",
+            toolKey: "nvm",
             item: ItemInfo(
                 description: "nvm (Node Version Manager) stores each installed Node.js version as a self-contained directory under `~/.nvm/versions/node/`. Each entry contains the Node binary, the bundled npm, and the standard library for that release.",
                 safetyNote: "Removing a version only affects projects pinned to it; reinstall at any time with `nvm install <version>`.",
@@ -308,6 +310,7 @@ enum RuleCatalog {
             notes: "fnm-managed Node.js runtime installation.",
             iconAsset: "nodejs-icon",
             languageKey: "javascript",
+            toolKey: "fnm",
             item: ItemInfo(
                 description: "fnm (Fast Node Manager) is a Rust-based Node.js version manager. It stores each installed Node.js version as a self-contained directory under `~/.fnm/node-versions/`, containing the complete Node runtime for that release.",
                 safetyNote: "Removing a version only affects projects pinned to it; reinstall with `fnm install <version>`.",
@@ -325,6 +328,7 @@ enum RuleCatalog {
             notes: "nvm.fish-managed Node.js runtime installation.",
             iconAsset: "nodejs-icon",
             languageKey: "javascript",
+            toolKey: "nvm",
             item: ItemInfo(
                 description: "nvm.fish (jorgebucaran/nvm) is a Node.js version manager for the Fish shell. It stores each installed Node.js version under `~/.local/share/nvm` (or a custom `$nvm_data` path), with one self-contained directory per release.",
                 safetyNote: "Removing a version only affects Fish shell sessions pinned to it; reinstall with `nvm install <version>`.",
@@ -342,6 +346,7 @@ enum RuleCatalog {
             notes: "asdf-managed Node.js runtime installation.",
             iconAsset: "nodejs-icon",
             languageKey: "javascript",
+            toolKey: "asdf",
             item: ItemInfo(
                 description: "asdf is a universal version manager that handles multiple language runtimes through a plugin system. Node.js versions installed via the `asdf-nodejs` plugin are stored under `~/.asdf/installs/nodejs/`, one self-contained directory per version.",
                 safetyNote: "Removing a version only affects projects that declare it in `.tool-versions`; reinstall with `asdf install nodejs <version>`.",
@@ -359,6 +364,7 @@ enum RuleCatalog {
             notes: "n-managed Node.js runtime installation.",
             iconAsset: "nodejs-icon",
             languageKey: "javascript",
+            toolKey: "n",
             item: ItemInfo(
                 description: "`n` (tj/n) is a Node.js version manager written as a shell script. Downloaded Node.js versions are cached under `~/n/versions/node/` (or `$N_PREFIX/n/versions/node/`), one directory per release, so switching between them requires no re-downloading.",
                 safetyNote: "Removing a cached version forces a fresh download next time that version is activated with `n <version>`.",
@@ -479,6 +485,7 @@ enum RuleCatalog {
             iconAsset: "cocoapods",
             brandTint: cocoapodsRed,
             languageKey: "swift",
+            toolKey: "carthage",
             item: ItemInfo(
                 description: "`Carthage/Build/` holds compiled `.xcframework` or `.framework` bundles produced by Carthage and linked directly into your Xcode project. The lockfile `Cartfile.resolved` pins every framework version.",
                 safetyNote: "Lockfile-gated — `carthage bootstrap` rebuilds the exact framework versions from `Cartfile.resolved`.",
@@ -1000,6 +1007,7 @@ enum RuleCatalog {
             notes: "Compiler output cache for GCC and Clang.",
             iconAsset: "c-plusplus",
             languageKey: "cpp",
+            toolKey: "ccache",
             item: ItemInfo(
                 description: "`~/Library/Caches/ccache` (or `~/.ccache` if configured) is ccache's cache of previous compiler outputs, keyed by preprocessed source and compiler flags. It supports GCC, Clang, and compatible compilers for C, C++, Objective-C, and CUDA.",
                 safetyNote: "Deleting the cache only causes slower rebuilds; ccache repopulates it transparently on the next compilation.",
@@ -1342,6 +1350,7 @@ enum RuleCatalog {
             notes: "OmniSharp LSP server cache.",
             iconAsset: "dotnet", brandTint: netPurple,
             languageKey: "dotnet",
+            toolKey: "omnisharp",
             item: ItemInfo(
                 description: "`~/.omnisharp` holds OmniSharp's global configuration and server cache. OmniSharp is the LSP server that powers the C# extension for VS Code and other editors, providing IntelliSense, diagnostics, and refactoring for .NET projects.",
                 safetyNote: "OmniSharp recreates its cache when the editor next opens a .NET project.",
@@ -1452,6 +1461,7 @@ enum RuleCatalog {
             notes: "chruby/ruby-install Ruby interpreter.",
             iconAsset: "ruby", brandTint: rubyRed,
             languageKey: "ruby",
+            toolKey: "chruby",
             item: ItemInfo(
                 description: "`~/.rubies/` is the default installation prefix for `ruby-install`, the companion installer to chruby. Each subdirectory is a self-contained Ruby installation; chruby switches between them by adjusting `PATH` and related environment variables.",
                 safetyNote: "Deleting a version removes that interpreter — reinstall with `ruby-install ruby <version>` before using projects that depend on it.",
@@ -1469,6 +1479,7 @@ enum RuleCatalog {
             notes: "asdf-installed Ruby interpreter.",
             iconAsset: "ruby", brandTint: rubyRed,
             languageKey: "ruby",
+            toolKey: "asdf",
             item: ItemInfo(
                 description: "`~/.asdf/installs/ruby/` contains Ruby versions installed by asdf's ruby plugin. Each subdirectory is a self-contained Ruby installation; asdf selects among them based on the project's `.tool-versions` file.",
                 safetyNote: "Deleting a version removes that interpreter — projects whose `.tool-versions` specifies it will break until reinstalled.",
@@ -1654,6 +1665,7 @@ enum RuleCatalog {
             notes: "ghcup-installed GHC compiler.",
             iconAsset: "haskell", brandTint: haskellPurple,
             languageKey: "haskell",
+            toolKey: "ghcup",
             item: ItemInfo(
                 description: "`~/.ghcup/ghc/` contains GHC (Glasgow Haskell Compiler) versions installed by ghcup. Each subdirectory is a self-contained installation with the compiler, runtime libraries, and base packages; individual versions can exceed 1 GB.",
                 safetyNote: "Deleting a GHC version removes that compiler — Stack and Cabal projects that require it will fail until reinstalled.",
@@ -1671,6 +1683,7 @@ enum RuleCatalog {
             notes: "ghcup toolchain download cache.",
             iconAsset: "haskell", brandTint: haskellPurple,
             languageKey: "haskell",
+            toolKey: "ghcup",
             item: ItemInfo(
                 description: "`~/.ghcup/cache/` stores tarballs downloaded by ghcup when installing GHC versions, HLS (Haskell Language Server), and other toolchain components. Once a tool is installed, these archives are kept only as a download cache.",
                 safetyNote: "ghcup re-downloads the required archives from its distribution server on the next installation.",
@@ -1823,6 +1836,7 @@ enum RuleCatalog {
             notes: "rebar3 compiled BEAM output.",
             iconAsset: "erlang", brandTint: erlangRed,
             languageKey: "elixir",
+            toolKey: "rebar3",
             item: ItemInfo(
                 description: "`_build/` is rebar3's output directory for compiled Erlang BEAM files, application resource files, and release artifacts. Per-profile subdirectories (`_build/default/`, `_build/prod/`) hold both project modules and compiled dependency copies.",
                 safetyNote: "`rebar3 compile` rebuilds the entire tree from source.",
@@ -1840,6 +1854,7 @@ enum RuleCatalog {
             notes: "rebar3 Hex package and plugin cache.",
             iconAsset: "erlang", brandTint: erlangRed,
             languageKey: "elixir",
+            toolKey: "rebar3",
             item: ItemInfo(
                 description: "`~/.cache/rebar3/` is rebar3's global cache, storing downloaded Hex package tarballs, compiled plugin archives, and the Hex registry index. It is shared across all Erlang projects to avoid repeated network downloads.",
                 safetyNote: "rebar3 re-downloads the Hex registry and required packages from hex.pm on the next build.",
@@ -2694,6 +2709,430 @@ enum RuleCatalog {
                 regenCommand: nil,
                 links: [
                     InfoLink(title: "Tart — GitHub", url: "https://github.com/cirruslabs/tart", kind: .official),
+                ]
+            )
+        ),
+        // OrbStack — single sparse disk image holding all containers, k8s, and Linux machines.
+        Rule(
+            id: "orbstack.data", displayName: "OrbStack data image",
+            ecosystem: .vm, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Group Containers/HUAQ24HBR6.dev.orbstack/data/data.img.raw"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "OrbStack's sparse VM disk — contains ALL container images, volumes, k8s clusters, and Linux machines.",
+            iconAsset: "orbstack", sfSymbol: "shippingbox.fill",
+            brandTint: Color(red: 0xA0/255, green: 0x6C/255, blue: 0xDD/255),  // OrbStack sphere violet
+            toolKey: "orbstack",
+            item: ItemInfo(
+                description: "`data.img.raw` is a sparse virtualization disk that OrbStack uses as the entire storage backend for its container runtime, Kubernetes clusters, and Linux machines. The file's apparent size can read as huge (multi-TB) because it is sparse — actual on-disk usage is what matters.",
+                safetyNote: "Deleting `data.img.raw` permanently destroys every container image, volume, k8s cluster, and Linux machine. Prefer `docker system prune -a --volumes` and `orb delete <machine>` for targeted cleanup.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "OrbStack — Install / Uninstall", url: "https://docs.orbstack.dev/install", kind: .docs),
+                ]
+            )
+        ),
+        // Vagrant — downloaded box archives.
+        Rule(
+            id: "vagrant.boxes", displayName: "Vagrant boxes",
+            ecosystem: .vm, scope: .globalCache,
+            matcher: .fixedPathChildren(relativeToHome: ".vagrant.d/boxes"),
+            action: .trash, tier: .high, aggregation: .none,
+            notes: "Downloaded base box archives — each can be 200 MB to 5 GB.",
+            iconAsset: "vagrant", sfSymbol: "shippingbox.fill",
+            brandTint: Color(red: 0x14/255, green: 0x63/255, blue: 0xFF/255),
+            toolKey: "vagrant",
+            item: ItemInfo(
+                description: "`~/.vagrant.d/boxes/<provider>/<name>/<version>/` stores downloaded base VM box archives that `vagrant up` clones to create per-project VMs. Each box is a complete OS image — typically 200 MB to 5 GB — and multiple versions accumulate as boxes are upgraded.",
+                safetyNote: "Removing boxes does NOT destroy already-cloned per-project VMs. They are re-fetched the next time a project requests a missing version, or via `vagrant box add`.",
+                regenCommand: "vagrant box prune",
+                links: [
+                    InfoLink(title: "Vagrant — box CLI", url: "https://developer.hashicorp.com/vagrant/docs/cli/box", kind: .docs),
+                ]
+            )
+        ),
+        // Vagrant — per-project provisioned VM state.
+        Rule(
+            id: "vagrant.machines", displayName: ".vagrant/ (Vagrant)",
+            ecosystem: .vm, scope: .projectLocal,
+            matcher: .marker(directoryName: ".vagrant", requiredMarkers: ["Vagrantfile"]),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Per-project Vagrant VM state — destroying it loses all in-VM data.",
+            iconAsset: "vagrant", sfSymbol: "externaldrive.fill",
+            brandTint: Color(red: 0x14/255, green: 0x63/255, blue: 0xFF/255),
+            toolKey: "vagrant",
+            item: ItemInfo(
+                description: "`.vagrant/machines/<name>/<provider>/` holds the cloned VM disk, machine ID, and SSH key for each VM defined in this project's `Vagrantfile`. Deleting it destroys the running VM and everything installed inside it.",
+                safetyNote: "`vagrant up` will re-provision a fresh VM from the `Vagrantfile`, but any files, packages, or state inside the old VM are gone forever. For a clean teardown that also removes the underlying provider VM, run `vagrant destroy` from the project directory before deleting.",
+                regenCommand: "vagrant up",
+                links: [
+                    InfoLink(title: "Vagrant — destroy", url: "https://developer.hashicorp.com/vagrant/docs/cli/destroy", kind: .docs),
+                ]
+            )
+        ),
+        // VirtualBox — VM disk + config bundle directory.
+        Rule(
+            id: "virtualbox.vms", displayName: "VirtualBox VM",
+            ecosystem: .vm, scope: .globalCache,
+            matcher: .fixedPathChildren(relativeToHome: "VirtualBox VMs"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Each VM directory contains its disk images and config — deletion is irreversible.",
+            iconAsset: "virtualbox", sfSymbol: "externaldrive.fill",
+            brandTint: Color(red: 0x18/255, green: 0x39/255, blue: 0x70/255),
+            toolKey: "virtualbox",
+            item: ItemInfo(
+                description: "`~/VirtualBox VMs/<name>/` is a per-VM directory containing the `.vbox` config, `.vdi` / `.vmdk` disk images, snapshots, and logs. The disk image holds everything inside the VM — installed OS, files, configuration.",
+                safetyNote: "Deleting the directory leaves a stale entry in VirtualBox's global registry (`~/Library/VirtualBox/VirtualBox.xml`). For a clean removal that also clears the registry, run `VBoxManage unregistervm <name> --delete`.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "VirtualBox — Manual", url: "https://www.virtualbox.org/manual/ch10.html", kind: .docs),
+                ]
+            )
+        ),
+        // UTM — VM bundles (popular QEMU/Apple-Virtualization frontend on Apple Silicon).
+        Rule(
+            id: "utm.vms", displayName: "UTM VM",
+            ecosystem: .vm, scope: .globalCache,
+            matcher: .fixedPathChildren(relativeToHome: "Library/Containers/com.utmapp.UTM/Data/Documents"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "UTM `.utm` VM bundle — disk image and config in one self-contained package.",
+            iconAsset: "utm", sfSymbol: "externaldrive.fill",
+            brandTint: Color(red: 0x52/255, green: 0x2D/255, blue: 0xC4/255),
+            toolKey: "utm",
+            item: ItemInfo(
+                description: "Each `.utm` bundle contains a VM's qcow2 disk(s), NVRAM/EFI variables, and `config.plist`. UTM stores these under its sandboxed Container directory; the bundle is fully self-contained.",
+                safetyNote: "Sending the bundle to the Trash removes the VM permanently. UTM has no destructive CLI — recovering from the Trash is the only undo.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "UTM — documentation", url: "https://docs.getutm.app/", kind: .docs),
+                ]
+            )
+        ),
+        // VMware Fusion — VM bundles (now free for personal use).
+        Rule(
+            id: "vmware-fusion.vms", displayName: "VMware Fusion VM",
+            ecosystem: .vm, scope: .globalCache,
+            matcher: .fixedPathChildren(relativeToHome: "Virtual Machines"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "`.vmwarevm` bundle — full disk and snapshot state for a Fusion VM.",
+            iconAsset: "vmware-fusion", sfSymbol: "externaldrive.fill",
+            brandTint: Color(red: 0x60/255, green: 0x77/255, blue: 0x96/255),
+            toolKey: "vmware-fusion",
+            item: ItemInfo(
+                description: "Each `.vmwarevm` bundle contains the VM's `.vmdk` disk(s), `.nvram`, `.vmx` config, and any snapshots. The default location for newer Fusion installs is `~/Virtual Machines/`; older or upgraded installs may use `~/Documents/Virtual Machines.localized/` instead.",
+                safetyNote: "Trashing the bundle permanently deletes the VM. Fusion's library auto-removes stale entries on next launch.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "VMware Fusion — default VM file location", url: "https://techdocs.broadcom.com/us/en/vmware-cis/desktop-hypervisors/fusion-pro/13-0/using-vmware-fusion/understanding-vmware-fusion/navigating-and-taking-action-using-the-vmware-fusion-interface/default-file-location-of-a-virtual-machine.html", kind: .docs),
+                ]
+            )
+        ),
+        // Parallels Desktop — VM bundles.
+        Rule(
+            id: "parallels.vms", displayName: "Parallels VM",
+            ecosystem: .vm, scope: .globalCache,
+            matcher: .fixedPathChildren(relativeToHome: "Parallels"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "`.pvm` (Linux/Windows) or `.macvm` (macOS guest) bundle — full disk and snapshot state.",
+            iconAsset: "parallels", sfSymbol: "externaldrive.fill",
+            brandTint: Color(red: 0xCC/255, green: 0x00/255, blue: 0x00/255),
+            toolKey: "parallels",
+            item: ItemInfo(
+                description: "Each `.pvm` or `.macvm` bundle contains the guest's disk image, snapshots, NVRAM, and config. Parallels stores these in `~/Parallels/` for v12+; older versions and the App Store edition use different roots.",
+                safetyNote: "Trashing the bundle permanently deletes the VM. Parallels Control Center auto-removes stale library entries on next launch.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Parallels — Locate VM on Mac (KB 117333)", url: "https://kb.parallels.com/117333", kind: .docs),
+                ]
+            )
+        ),
+        // Lima — Linux-on-Mac VM instances.
+        Rule(
+            id: "lima.instances", displayName: "Lima VM instance",
+            ecosystem: .vm, scope: .globalCache,
+            matcher: .fixedPathChildren(relativeToHome: ".lima"),
+            action: .trash, tier: .high, aggregation: .none,
+            notes: "Per-instance Lima VM — disk and runtime sockets.",
+            iconAsset: "lima", sfSymbol: "externaldrive.fill",
+            brandTint: Color(red: 0xF1/255, green: 0xC4/255, blue: 0x0F/255),
+            toolKey: "lima",
+            item: ItemInfo(
+                description: "`~/.lima/<instance>/` holds the instance's `lima.yaml`, `disk` file, `cidata.iso`, and runtime sockets. The disk is recreated by `limactl start` from the YAML config, but data inside the VM is destroyed on delete.",
+                safetyNote: "For a clean teardown that also stops the VM and removes its sockets, run `limactl delete <name>` before trashing the directory.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Lima — directory layout", url: "https://lima-vm.io/docs/dev/internals/", kind: .docs),
+                ]
+            )
+        ),
+        // Lima — base-image download cache.
+        Rule(
+            id: "lima.download-cache", displayName: "Lima download cache",
+            ecosystem: .vm, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/lima/download"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "Cached cloud-image downloads keyed by URL hash.",
+            iconAsset: "lima", sfSymbol: "shippingbox.fill",
+            brandTint: Color(red: 0xF1/255, green: 0xC4/255, blue: 0x0F/255),
+            toolKey: "lima",
+            item: ItemInfo(
+                description: "`~/Library/Caches/lima/download/by-url-sha256/` stores downloaded cloud images (Ubuntu, Fedora, Alpine, etc.) keyed by their source URL hash. Lima reuses these across instances to avoid redundant downloads.",
+                safetyNote: "Cached images are re-downloaded on the next `limactl start` for an instance that needs them.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Lima — directory layout", url: "https://lima-vm.io/docs/dev/internals/", kind: .docs),
+                ]
+            )
+        ),
+        // Colima — Lima-based container runtime.
+        Rule(
+            id: "colima.instances", displayName: "Colima instance",
+            ecosystem: .vm, scope: .globalCache,
+            matcher: .fixedPathChildren(relativeToHome: ".colima/_lima"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Colima profile VM — contains all OCI images, containers, and named volumes.",
+            iconAsset: "colima", sfSymbol: "externaldrive.fill",
+            brandTint: Color(red: 0x2B/255, green: 0xB3/255, blue: 0x67/255),
+            toolKey: "colima",
+            item: ItemInfo(
+                description: "`~/.colima/_lima/<profile>/` holds the Lima-managed VM that backs Colima's container runtime. The VM's disk contains every pulled OCI image, every running and stopped container, and all named volumes.",
+                safetyNote: "Deleting the directory destroys all container state. Prefer `colima delete [profile]` (or `colima delete --data` to wipe just the data disk on v0.9+) for a clean teardown.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Colima — README", url: "https://github.com/abiosoft/colima", kind: .official),
+                ]
+            )
+        ),
+    ]
+
+    // MARK: - AI Coding Agents (CLI / TUI / agentic dev assistants)
+
+    private static let aiCodingAgents: [Rule] = [
+        // Claude Code — full session transcripts. Irreversible if deleted.
+        Rule(
+            id: "claude-code.projects", displayName: "Claude Code transcripts",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPathChildren(relativeToHome: ".claude/projects"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Per-project Claude Code session transcripts — chat, tool calls, diffs.",
+            iconAsset: "claude-code", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0xD9/255, green: 0x77/255, blue: 0x57/255),  // Anthropic terracotta
+            toolKey: "claude-code",
+            item: ItemInfo(
+                description: "`~/.claude/projects/<encoded-cwd>/*.jsonl` contains the full session transcript for every Claude Code conversation: model messages, tool calls (including file reads and edits), and diffs. Sessions accumulate per working directory; heavy users can build up several gigabytes of history.",
+                safetyNote: "Once deleted, transcripts are unrecoverable — `claude --resume` will no longer find them. Anthropic does not store these server-side.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Claude Code — overview", url: "https://platform.claude.com/docs/en/docs/agents/claude-code/overview", kind: .official),
+                ]
+            )
+        ),
+        // OpenAI Codex CLI — sessions and input history. Irreversible.
+        Rule(
+            id: "codex-cli.sessions", displayName: "Codex CLI sessions",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".codex/sessions"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Codex CLI session rollouts — resumable transcripts and tool calls.",
+            iconAsset: "codex-cli", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0x10/255, green: 0xA3/255, blue: 0x7F/255),  // OpenAI green
+            toolKey: "codex-cli",
+            item: ItemInfo(
+                description: "`~/.codex/sessions/` stores JSONL session rollouts that the OpenAI Codex CLI uses to resume prior conversations and replay tool calls. The companion file `~/.codex/history.jsonl` records every prompt the user has typed.",
+                safetyNote: "Rollouts and history are local-only — deletion is permanent and breaks `codex resume`. The `CODEX_HOME` env var can relocate this directory; if set, the rule does not apply.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "OpenAI Codex CLI", url: "https://developers.openai.com/codex/cli", kind: .official),
+                ]
+            )
+        ),
+        // OpenCode (sst) — session storage. XDG layout used on macOS.
+        Rule(
+            id: "opencode.storage", displayName: "OpenCode storage",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".local/share/opencode/storage"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "OpenCode per-project sessions, messages, and parts.",
+            iconAsset: "opencode", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0xE2/255, green: 0x4D/255, blue: 0x1A/255),  // SST orange
+            toolKey: "opencode",
+            item: ItemInfo(
+                description: "OpenCode (the SST project) stores session, message, and part records under `~/.local/share/opencode/storage/`, organised per-project. Even on macOS, OpenCode follows the XDG Base Directory layout used by its Linux build.",
+                safetyNote: "Sessions are local-only — once deleted they cannot be restored. Auth credentials live in `~/.local/share/opencode/auth.json`, which this rule deliberately leaves untouched so you stay signed in.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "OpenCode", url: "https://opencode.ai/", kind: .official),
+                    InfoLink(title: "OpenCode — GitHub", url: "https://github.com/sst/opencode", kind: .official),
+                ]
+            )
+        ),
+        // Gemini CLI — per-project chat sessions and checkpoints.
+        Rule(
+            id: "gemini-cli.tmp", displayName: "Gemini CLI sessions",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPathChildren(relativeToHome: ".gemini/tmp"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Per-project Gemini CLI chat sessions and file checkpoints.",
+            iconAsset: "gemini-cli", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0x42/255, green: 0x85/255, blue: 0xF4/255),  // Google blue
+            toolKey: "gemini-cli",
+            item: ItemInfo(
+                description: "`~/.gemini/tmp/<project_hash>/chats/session-*.json` stores per-project chat history; `~/.gemini/tmp/<project_hash>/checkpoints/` stores file checkpoints captured before edits. Each working directory gets its own hashed subfolder.",
+                safetyNote: "Chats are unrecoverable once deleted. Checkpoints are typically also recoverable from git, if the working directory is a git repo.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Gemini CLI — GitHub", url: "https://github.com/google-gemini/gemini-cli", kind: .official),
+                ]
+            )
+        ),
+        // Aider — per-project ctags + treesitter cache (regenerable).
+        Rule(
+            id: "aider.tags-cache", displayName: ".aider.tags.cache.v3/",
+            ecosystem: .aiCodingAgent, scope: .projectLocal,
+            matcher: .marker(directoryName: ".aider.tags.cache.v3", requiredMarkers: [".git"]),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Aider's repo-map ctags + treesitter cache — rebuilt on next run.",
+            iconAsset: "aider", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0xF6/255, green: 0x82/255, blue: 0x1F/255),  // Aider orange
+            toolKey: "aider",
+            item: ItemInfo(
+                description: "Aider scans the repo with ctags + treesitter to build a `repo map` for the LLM, caching results under `.aider.tags.cache.v3/` next to the project. On large repos this cache can run to hundreds of megabytes.",
+                safetyNote: "The cache is rebuilt automatically on the next `aider` run in this project — typically under a minute. Chat history (`.aider.chat.history.md`) is a separate file and is left untouched by this rule.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Aider — repo map", url: "https://aider.chat/docs/repomap.html", kind: .docs),
+                ]
+            )
+        ),
+        // Continue — codebase embedding/index store. Multi-GB on large monorepos.
+        Rule(
+            id: "continue.index", displayName: "Continue index",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".continue/index"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "Continue's per-workspace LanceDB embeddings, autocomplete cache, docs index.",
+            iconAsset: "continue", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0x6B/255, green: 0x46/255, blue: 0xFF/255),  // Continue purple
+            toolKey: "continue",
+            item: ItemInfo(
+                description: "`~/.continue/index/` holds Continue's persistent state for codebase chat: a LanceDB vector store with embeddings, an autocomplete cache, and a docs SQLite index. On a large monorepo this directory can reach multi-gigabyte sizes.",
+                safetyNote: "Re-indexed on the next workspace open — typically a few minutes per project, depending on size.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Continue — GitHub", url: "https://github.com/continuedev/continue", kind: .official),
+                ]
+            )
+        ),
+        // Continue — chat sessions. Irreversible.
+        Rule(
+            id: "continue.sessions", displayName: "Continue sessions",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".continue/sessions"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Continue chat session JSONs.",
+            iconAsset: "continue", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0x6B/255, green: 0x46/255, blue: 0xFF/255),
+            toolKey: "continue",
+            item: ItemInfo(
+                description: "`~/.continue/sessions/` stores Continue's chat history as one JSON per session. Sessions persist across IDE restarts and accumulate over time.",
+                safetyNote: "Deleted sessions cannot be restored — Continue stores chat locally only.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Continue — GitHub", url: "https://github.com/continuedev/continue", kind: .official),
+                ]
+            )
+        ),
+        // Continue — bundled Chromium / esbuild used for docs scraping.
+        Rule(
+            id: "continue.utils", displayName: "Continue utils",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".continue/.utils"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "Bundled Chromium and esbuild used by the docs scraper.",
+            iconAsset: "continue", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0x6B/255, green: 0x46/255, blue: 0xFF/255),
+            toolKey: "continue",
+            item: ItemInfo(
+                description: "`~/.continue/.utils/` caches helper binaries Continue downloads on demand: a Chromium snapshot for the docs scraper plus an esbuild binary. Together these run several hundred megabytes.",
+                safetyNote: "Re-downloaded on the next docs-index run.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Continue — GitHub", url: "https://github.com/continuedev/continue", kind: .official),
+                ]
+            )
+        ),
+        // Cline — task transcripts.
+        Rule(
+            id: "cline.tasks", displayName: "Cline tasks",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".cline/tasks"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Per-task Cline transcripts and tool outputs.",
+            iconAsset: "cline", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0x18/255, green: 0x18/255, blue: 0x18/255),
+            toolKey: "cline",
+            item: ItemInfo(
+                description: "`~/.cline/tasks/` stores Cline's per-task history: messages, tool inputs and outputs, file diffs. Each task can run from several megabytes to gigabytes depending on length.",
+                safetyNote: "Once deleted, task histories cannot be recovered. Cline's separate checkpoint store (shadow git worktrees, kept under VS Code's globalStorage) is not touched by this rule.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Cline — checkpoints", url: "https://docs.cline.bot/features/checkpoints", kind: .docs),
+                ]
+            )
+        ),
+        // Goose CLI — session transcripts.
+        Rule(
+            id: "goose.sessions", displayName: "Goose CLI sessions",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".local/share/goose/sessions"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Block Goose CLI per-session JSONL transcripts.",
+            iconAsset: "goose", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0x4F/255, green: 0x46/255, blue: 0xE5/255),  // Block indigo
+            toolKey: "goose",
+            item: ItemInfo(
+                description: "`~/.local/share/goose/sessions/` stores Block's Goose CLI session transcripts as JSONL — one file per session. The companion config in `~/.config/goose/` is left untouched by this rule.",
+                safetyNote: "Sessions are local-only and cannot be restored after deletion.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Goose — documentation", url: "https://block.github.io/goose/", kind: .official),
+                ]
+            )
+        ),
+        // Windsurf (Codeium) — completion indexes, models, daemon state.
+        Rule(
+            id: "windsurf.codeium", displayName: "Windsurf / Codeium state",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".codeium/windsurf"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "Codeium daemon state, indexes, and completion models for Windsurf.",
+            iconAsset: "windsurf", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0x14/255, green: 0xB1/255, blue: 0x9C/255),  // Codeium teal
+            toolKey: "windsurf",
+            item: ItemInfo(
+                description: "`~/.codeium/windsurf/` is Windsurf's primary state directory: Codeium daemon state, codebase indexes, downloaded completion models, and per-project caches. Codeium's official uninstall instructions point users at this directory.",
+                safetyNote: "Indexes and models are re-downloaded on next launch. Cascade chat history may live separately under `~/Library/Application Support/Windsurf/User/globalStorage/`; this rule does not touch that.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Windsurf — documentation", url: "https://docs.windsurf.com/", kind: .official),
+                ]
+            )
+        ),
+        // OpenHands — conversation history, sandbox state.
+        Rule(
+            id: "openhands.data", displayName: "OpenHands data",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".openhands"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "OpenHands conversation history, file_store, sandbox state.",
+            iconAsset: "openhands", sfSymbol: "bubble.and.pencil",
+            brandTint: Color(red: 0xFF/255, green: 0x6B/255, blue: 0xA1/255),
+            toolKey: "openhands",
+            item: ItemInfo(
+                description: "`~/.openhands/` stores OpenHands conversation history, sandbox file mounts, and runtime state. Conversation history is irreversible; the sandbox file_store is recreated on next run.",
+                safetyNote: "Pulled OpenHands runtime Docker images (`docker.all-hands.dev/all-hands-ai/runtime:*`) are not stored here — those live in Docker and would be cleared via the Docker rule.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "OpenHands — installation", url: "https://docs.openhands.dev/usage/installation", kind: .docs),
                 ]
             )
         ),
