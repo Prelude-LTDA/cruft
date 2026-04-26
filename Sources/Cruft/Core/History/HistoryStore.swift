@@ -15,7 +15,21 @@ struct HistoryEntry: Codable, Sendable, Identifiable {
     enum Method: String, Codable, Sendable {
         case trash
         case cleanCommand
+
+        var displayName: String {
+            switch self {
+            case .trash:        return "Trash"
+            case .cleanCommand: return "Command"
+            }
+        }
     }
+}
+
+extension HistoryEntry {
+    /// Sort key for the Method column in the History window — KeyPathComparator
+    /// needs a directly Comparable, and the raw string sorts alphabetically
+    /// in a way that's stable enough ("Command" < "Trash").
+    var methodSortKey: String { method.displayName }
 }
 
 actor HistoryStore {
@@ -72,6 +86,17 @@ actor HistoryStore {
         }
         pathIndex = idx
         return idx
+    }
+
+    /// Wipe every recorded entry. Backs the manual "Clear History" action.
+    /// Doesn't touch the actual files on disk — those are already in Trash
+    /// or were removed by a clean command. Persists the empty list so the
+    /// clear survives a relaunch.
+    func clear() {
+        _ = load()    // ensure `loaded` is true so we don't repopulate from disk
+        cache.removeAll()
+        pathIndex = nil
+        persist()
     }
 
     private func persist() {

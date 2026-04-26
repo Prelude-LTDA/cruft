@@ -111,6 +111,11 @@ final class AppModel {
     let rules: [Rule] = RuleCatalog.rules
     private let history = HistoryStore()
 
+    /// Mirror of the history actor's contents, kept on the main actor so
+    /// the History window can bind to it directly. Refreshed at startup
+    /// and after every successful deletion.
+    private(set) var historyEntries: [HistoryEntry] = []
+
     private static let scanRootsKey = "regen.scanRoots.v1"
     private static let spotlightKey = "regen.spotlightEnabled.v1"
     private static let globalCachesKey = "regen.globalCachesEnabled.v1"
@@ -193,7 +198,27 @@ final class AppModel {
 
     // MARK: - Startup
 
-    init() {}
+    init() {
+        // Warm the history mirror so the History window opens with data
+        // even before the user has triggered a deletion this session.
+        Task { @MainActor in
+            self.historyEntries = await self.history.load()
+        }
+    }
+
+    // MARK: - History
+
+    func clearHistory() {
+        Task { @MainActor in
+            await self.history.clear()
+            self.historyEntries = []
+        }
+    }
+
+    private func refreshHistoryMirror() async {
+        let snapshot = await history.load()
+        await MainActor.run { self.historyEntries = snapshot }
+    }
 
     // MARK: - Derived views
 
@@ -391,6 +416,9 @@ final class AppModel {
                 trashed = entries
             }
         }
+        // Refresh the History window's mirror so it reflects this batch
+        // without needing a window close/reopen.
+        await refreshHistoryMirror()
         return DeletionSummary(
             reclaimed: reclaimed,
             successCount: ok,

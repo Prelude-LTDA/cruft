@@ -5,6 +5,7 @@ struct MainWindowView: View {
     @Bindable var model: AppModel
     @State private var showConfirm = false
     @State private var pendingItems: [Finding] = []
+    @Environment(\.openWindow) private var openWindow
 
     private func requestConfirm() {
         // Delete only acts on items that are currently visible — selections
@@ -141,6 +142,22 @@ struct MainWindowView: View {
             .disabled(model.selectedFindings.isEmpty)
             .help("Move selected items to Trash (⌘⌫)")
             .keyboardShortcut(.delete, modifiers: [.command])
+        }
+        .customizationBehavior(.default)
+
+        ToolbarSpacer(.fixed, placement: .primaryAction)
+
+        ToolbarItem(id: "history", placement: .primaryAction) {
+            Button {
+                openWindow(id: "history")
+            } label: {
+                Label("History", systemImage: "clock.arrow.circlepath")
+            }
+            // No `.keyboardShortcut` here — ⌘Y is registered on the
+            // History scene itself (see CruftApp), which both auto-creates
+            // the Window menu entry and routes the shortcut to opening
+            // (or front-bringing) that singleton window.
+            .help("Show cleanup history (⌘Y)")
         }
         .customizationBehavior(.default)
 

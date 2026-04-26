@@ -31,5 +31,20 @@ struct CruftApp: App {
                     .disabled(model.selection.isEmpty)
             }
         }
+
+        // Singleton history window. `Window` (vs `WindowGroup`) only ever
+        // has one instance — opening it again brings the existing one
+        // forward instead of stacking duplicates. Matches Safari ⌘Y.
+        Window("Cleanup History", id: "history") {
+            HistoryView(model: model)
+                .frame(minWidth: 720, idealWidth: 1180,
+                       minHeight: 420, idealHeight: 600)
+        }
+        .windowToolbarStyle(.unified(showsTitle: true))
+        // Sized to fit all five columns at their ideal widths (Date 130 +
+        // Path 420 + Rule 180 + Method 90 + Size 100 = 920) with room for
+        // the table chrome and a generous Path column.
+        .defaultSize(width: 1180, height: 600)
+        .keyboardShortcut("y", modifiers: [.command])
     }
 }
