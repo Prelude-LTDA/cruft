@@ -246,17 +246,34 @@ struct InfoPanelView: View {
                     pending: arr.filter { $0.size == nil && $0.sizeHint != .unknown }.count
                 )
             }
-            .sorted { $0.bytes > $1.bytes }
+            .sorted { lhs, rhs in
+                // Primary: size desc. Secondary: count desc — gives a
+                // sensible early-scan order while everything is still nil
+                // (every slice has 0 bytes, so the "biggest by count"
+                // wins). Tertiary: displayName asc (what the user sees) —
+                // final tie-breaker so identical bytes+count never shuffle
+                // between renders.
+                if lhs.bytes != rhs.bytes { return lhs.bytes > rhs.bytes }
+                if lhs.count != rhs.count { return lhs.count > rhs.count }
+                return lhs.ecosystem.displayName.localizedCaseInsensitiveCompare(rhs.ecosystem.displayName) == .orderedAscending
+            }
+        // Equatable signature that changes when slice order, byte counts,
+        // or pending counts change. Drives `.animation(_:value:)` so the
+        // Breakdown rows reorder smoothly and the stacked bar segments
+        // resize between scan ticks instead of snapping.
+        let slicesSignature = slices.map {
+            "\($0.ecosystem.rawValue):\($0.bytes):\($0.pending):\($0.count)"
+        }
 
         return VStack(alignment: .leading, spacing: 16) {
             Text(title)
                 .font(.title3).fontWeight(.semibold)
 
             InfoSection(title: "Reclaimable") {
-                // Headline total: while some items are still being sized,
-                // show "Calculating…" instead of a partial sum that the
-                // user might misread as final. Once sizing completes the
-                // real byte total fades in.
+                // Headline total: while no bytes are known yet, show
+                // "Calculating…" instead of a partial sum the user might
+                // misread as final. Once any size lands, the byte total
+                // takes over.
                 if pendingTotal > 0 && total == 0 {
                     Text("Calculating…")
                         .font(.system(.largeTitle, design: .rounded).weight(.semibold))
@@ -266,14 +283,24 @@ struct InfoPanelView: View {
                         .font(.system(.largeTitle, design: .rounded).weight(.semibold))
                         .foregroundStyle(.primary)
                 }
-                // The stacked bar is only useful once every segment has a
-                // real size — partial composition would look like ecosystems
-                // are missing. Hold it until sizing finishes.
-                if pendingTotal == 0 && total > 0 {
+                // Bar appears as soon as we have any sized bytes — segments
+                // are proportional to the *known* total, and the existing
+                // `.animation(_:value:)` on segment widths smoothly redraws
+                // the composition as more sizes arrive. Ecosystems whose
+                // items are still pending contribute zero width until
+                // their sizes land, then expand into place.
+                if total > 0 {
                     StackedSizeBar(slices: slices, total: total)
                         .padding(.top, 4)
+                        .transition(.opacity)
+                        .animation(.smooth(duration: 0.5), value: slicesSignature)
                 }
             }
+            // Drive the bar's appearance transition (`if total > 0`) — the
+            // `.transition(.opacity)` on the bar only fires inside an
+            // animation scope, and we want to scope it tightly enough that
+            // the headline byte text doesn't get pulled in.
+            .animation(.smooth(duration: 0.5), value: total > 0)
 
             InfoSection(title: "Breakdown") {
                 ForEach(slices, id: \.ecosystem) { slice in
@@ -299,6 +326,7 @@ struct InfoPanelView: View {
                     }
                 }
             }
+            .animation(.smooth(duration: 0.5), value: slicesSignature)
         }
     }
 }

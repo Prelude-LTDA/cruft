@@ -417,12 +417,30 @@ final class AppModel {
                     launched += 1
                 }
 
+                // Sizing-side analogue of the discovery flush. Without this,
+                // each completed sizer task fires `updateSize` directly on the
+                // main actor — hundreds of mutations per second through a
+                // chain that re-derives `filteredFindings` / `projectGroups`
+                // and ripples into the sidebar + menu bar evaluation.
+                var pendingSizes: [(UInt64, Int64)] = []
+                var lastSizeFlush = ContinuousClock.now
                 while let (id, bytes) = await group.next() {
                     if Task.isCancelled { return }
-                    await MainActor.run { self.updateSize(id: id, bytes: bytes) }
+                    pendingSizes.append((id, bytes))
+                    let now = ContinuousClock.now
+                    if pendingSizes.count >= 250 || now - lastSizeFlush > .milliseconds(1000) {
+                        let batch = pendingSizes
+                        pendingSizes.removeAll(keepingCapacity: true)
+                        lastSizeFlush = now
+                        await MainActor.run { self.updateSizes(batch) }
+                    }
                     if let f = iterator.next() {
                         group.addTask(operation: sizeTask(for: f))
                     }
+                }
+                if !pendingSizes.isEmpty {
+                    let final = pendingSizes
+                    await MainActor.run { self.updateSizes(final) }
                 }
             }
 
@@ -457,10 +475,20 @@ final class AppModel {
         selection.removeAll()
     }
 
-    private func updateSize(id: UInt64, bytes: Int64) {
-        guard let idx = findings.firstIndex(where: { $0.id == id }) else { return }
-        findings[idx].size = bytes
-        sizedFindings += 1
+    /// Apply a batch of (id, sizeBytes) updates in a single pass. One
+    /// `findings` mutation regardless of batch length, so SwiftUI's
+    /// observation cascade only fires once per flush.
+    private func updateSizes(_ batch: [(UInt64, Int64)]) {
+        guard !batch.isEmpty else { return }
+        let sizesByID = Dictionary(uniqueKeysWithValues: batch)
+        var sized = 0
+        for idx in findings.indices {
+            if let bytes = sizesByID[findings[idx].id] {
+                findings[idx].size = bytes
+                sized += 1
+            }
+        }
+        sizedFindings += sized
     }
 
     // MARK: - Deletion
