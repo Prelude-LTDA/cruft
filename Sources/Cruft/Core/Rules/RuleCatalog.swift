@@ -915,7 +915,7 @@ enum RuleCatalog {
             matcher: .fixedPath(relativeToHome: "Library/Caches/Mozilla.sccache"),
             action: .trash, tier: .low, aggregation: .none,
             notes: "Shared compiler cache for Rust / C / C++ / CUDA.",
-            iconAsset: "sccache",
+            iconAsset: "rust",  // No standalone sccache logo — reuses parent language
             languageKey: "rust",
             toolKey: "sccache",
             item: ItemInfo(
@@ -1068,7 +1068,7 @@ enum RuleCatalog {
             matcher: .fixedPath(relativeToHome: ".cache/pipenv"),
             action: .trash, tier: .medium, aggregation: .none,
             notes: "pipenv's HTTP wheel + hash cache.",
-            iconAsset: "pipenv",
+            iconAsset: "python",  // No standalone pipenv logo — reuses parent language
             languageKey: "python",
             toolKey: "pipenv",
             item: ItemInfo(
@@ -1324,7 +1324,7 @@ enum RuleCatalog {
             matcher: .fixedPath(relativeToHome: "Library/Caches/Coursier/v1"),
             action: .trash, tier: .high, aggregation: .none,
             notes: "Resolved JARs/POMs/sources shared across all Scala tooling.",
-            iconAsset: "coursier",
+            iconAsset: "scala",  // No standalone Coursier logo — reuses Scala
             languageKey: "java",
             toolKey: "coursier",
             item: ItemInfo(
@@ -1378,7 +1378,7 @@ enum RuleCatalog {
             matcher: .fixedPath(relativeToHome: "Library/Caches/ScalaCli"),
             action: .trash, tier: .low, aggregation: .none,
             notes: "Bloop session, BSP state, prebuilts.",
-            iconAsset: "scala-cli",
+            iconAsset: "scala",  // No standalone Scala CLI logo — reuses Scala
             languageKey: "java",
             toolKey: "scala-cli",
             item: ItemInfo(
@@ -3485,7 +3485,7 @@ enum RuleCatalog {
             matcher: .fixedPath(relativeToHome: "Library/Application Support/rancher-desktop"),
             action: .trash, tier: .high, aggregation: .none,
             notes: "Rancher Desktop VM disk + k3s state (5–20 GB).",
-            iconAsset: "rancher-desktop",
+            iconAsset: "rancher",
             toolKey: "rancher-desktop",
             item: ItemInfo(
                 description: "`~/Library/Application Support/rancher-desktop/` holds Rancher Desktop's VM disk image plus its embedded k3s/k8s state. Typically 5–20 GB.",
@@ -4764,7 +4764,7 @@ enum RuleCatalog {
             matcher: .fixedPath(relativeToHome: ".cache/act"),
             action: .trash, tier: .low, aggregation: .none,
             notes: "Local GitHub Actions runner cache (nektos/act).",
-            iconAsset: "act",
+            iconAsset: "github-actions",
             brandTint: actBlue,
             toolKey: "act",
             item: ItemInfo(
