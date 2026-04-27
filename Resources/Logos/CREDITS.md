@@ -41,6 +41,7 @@ Used to identify each tool whose artifacts Cruft cleans up.
   - `utm.png` — <https://getutm.app/>
   - `parallels.png` — <https://www.parallels.com/>
   - `sbt.svg` — <https://www.scala-sbt.org/>
+  - `metal.png` — <https://developer.apple.com/metal/> (Apple framework icon).
 
 Tools without a distinct standalone logo (sccache, golangci-lint where it shows the Go
 gopher, pipenv, Coursier, Scala CLI, gopls, kubectl, gcloud's CLI scope, act-as-runner)

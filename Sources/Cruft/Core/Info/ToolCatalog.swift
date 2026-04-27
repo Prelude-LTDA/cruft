@@ -773,6 +773,20 @@ enum ToolCatalog {
             ]
         ),
 
+        ToolInfo(
+            key: "metal",
+            displayName: "Metal",
+            tagline: "Apple's low-level GPU framework for rendering and compute on macOS, iOS, and the rest of the Apple platforms.",
+            description: "Metal is the GPU API every modern Apple-platform graphics or compute workload bottoms out on — directly via apps written against `MTLDevice`, or transitively through wgpu (Bevy and other Rust GPU work), MoltenVK (Vulkan-on-Mac), Apple's own MPS / MLX, PyTorch's MPS backend, and SwiftUI / Core Animation themselves. The driver compiles MSL into AIR (Apple's intermediate representation) and caches the binaries per-process: bundled apps get their own `<bundle-id>/com.apple.metal/` subdirectory under the per-user Darwin cache, while non-bundled binaries (anything launched via `cargo run`, `swift run`, or a script interpreter) share the top-level `com.apple.metal/` pool.",
+            languageKey: "swift",
+            links: [
+                InfoLink(title: "Metal", url: "https://developer.apple.com/metal/", kind: .official),
+                InfoLink(title: "Metal Shading Language Specification", url: "https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf", kind: .docs),
+                InfoLink(title: "Metal — Apple Developer Documentation", url: "https://developer.apple.com/documentation/metal", kind: .docs),
+                InfoLink(title: "Metal (API) — Wikipedia", url: "https://en.wikipedia.org/wiki/Metal_(API)", kind: .wiki),
+            ]
+        ),
+
         // MARK: - Elixir
 
         ToolInfo(
