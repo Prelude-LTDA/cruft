@@ -71,14 +71,24 @@ enum Matcher: Sendable, Hashable {
 
     /// True for matchers that emit one finding per app/bundle and where the
     /// last path component is a generic subdir name (`Cache`, `com.apple.metal`,
-    /// `org.sparkle-project.Sparkle`). The UI uses this to format the row
-    /// title as `<bundle> · <subdir>` so apps stay distinguishable.
+    /// `org.sparkle-project.Sparkle`). Drives per-app grouping in the
+    /// results view.
     var isPerBundle: Bool {
+        perBundleSubdir != nil
+    }
+
+    /// The trailing subdirectory the per-bundle probe matched on, or nil
+    /// for non-per-bundle matchers. Used by `Finding.bundleSegment` to
+    /// know how many path components to walk up to reach the bundle root
+    /// (one for `Cache`, two for `WebKit/NetworkCache`, …).
+    var perBundleSubdir: String? {
         switch self {
-        case .darwinCachePerApp, .libraryCachesPerApp, .libraryAppSupportPerApp:
-            return true
+        case .darwinCachePerApp(let s),
+             .libraryCachesPerApp(let s),
+             .libraryAppSupportPerApp(let s):
+            return s
         default:
-            return false
+            return nil
         }
     }
 

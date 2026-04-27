@@ -71,16 +71,24 @@ struct Finding: Sendable, Hashable, Identifiable {
     }
 
     /// For per-bundle findings (`<bundle>/com.apple.metal`,
-    /// `<App>/Cache`, …) returns the parent path segment — i.e. the
-    /// bundle ID or display-name folder that owns the cache. nil for
-    /// every other finding. Used by the grouped view to bucket per-app
-    /// findings under an app header.
+    /// `<App>/Cache`, `<bundle>/WebKit/NetworkCache`, …) returns the
+    /// segment that names the owning app/bundle. nil for every other
+    /// finding. Used by the grouped view to bucket per-app findings
+    /// under an app header.
+    ///
+    /// Walks up `N` levels from the leaf where `N` is the slash-count
+    /// in the matcher's per-bundle subdir — so multi-level subdirs like
+    /// `WebKit/NetworkCache` correctly resolve to the bundle two levels
+    /// up, not the immediate parent.
     var bundleSegment: String? {
-        guard RuleCatalog.rule(id: ruleId)?.matcher.isPerBundle == true else {
-            return nil
+        guard let subdir = RuleCatalog.rule(id: ruleId)?.matcher.perBundleSubdir
+        else { return nil }
+        let levels = subdir.split(separator: "/").count
+        var url = URL(fileURLWithPath: presentationPath)
+        for _ in 0..<levels {
+            url = url.deletingLastPathComponent()
         }
-        let url = URL(fileURLWithPath: presentationPath)
-        return url.deletingLastPathComponent().lastPathComponent
+        return url.lastPathComponent
     }
 }
 

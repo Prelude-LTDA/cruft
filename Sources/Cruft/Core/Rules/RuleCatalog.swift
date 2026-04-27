@@ -5148,6 +5148,87 @@ enum RuleCatalog {
                 ]
             )
         ),
+        // ── Per-app WKWebView caches (Tauri / Webcatalog wrappers / any
+        //    app embedding WKWebView). All four follow the same layout at
+        //    `~/Library/Caches/<bundle>/WebKit/<subdir>/`. Lives in `.apple`
+        //    since WebKit is Apple's framework.
+        Rule(
+            id: "webkit.network-cache", displayName: "Per-App WebKit Network Cache",
+            ecosystem: .node, scope: .perAppCache,
+            matcher: .libraryCachesPerApp(subdir: "WebKit/NetworkCache"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "WKWebView HTTP cache (NetworkCache/Version N).",
+            iconAsset: "webkit",
+            brandTint: Color(red: 0x00/255, green: 0x73/255, blue: 0xE5/255),  // Safari blue
+            languageKey: "javascript",
+            toolKey: "webkit",
+            item: ItemInfo(
+                description: "`~/Library/Caches/<bundle>/WebKit/NetworkCache/Version <N>/` is WKWebView's HTTP response cache for any app embedding the WebKit view — Tauri apps, Webcatalog wrappers, and native macOS apps that use WKWebView for content panes (Sketch, Cyberduck, OBS Studio's stats overlay, etc.). Refilled from the network on next request.",
+                safetyNote: "Re-fetched lazily — only a perf hit while the cache rebuilds.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "WKWebView — Apple Developer", url: "https://developer.apple.com/documentation/webkit/wkwebview", kind: .docs),
+                    InfoLink(title: "WebKit", url: "https://webkit.org/", kind: .official),
+                ]
+            )
+        ),
+        Rule(
+            id: "webkit.cache-storage", displayName: "Per-App WebKit Cache Storage",
+            ecosystem: .node, scope: .perAppCache,
+            matcher: .libraryCachesPerApp(subdir: "WebKit/CacheStorage"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "WKWebView Service Worker Cache API store.",
+            iconAsset: "webkit",
+            brandTint: Color(red: 0x00/255, green: 0x73/255, blue: 0xE5/255),
+            languageKey: "javascript",
+            toolKey: "webkit",
+            item: ItemInfo(
+                description: "`~/Library/Caches/<bundle>/WebKit/CacheStorage/<origin-hash>/` backs the web platform's `caches` API for WKWebView-hosted content. PWA-style web apps wrapped in Tauri / Webcatalog / Safari Web Apps can accumulate multi-MB to multi-GB here as they pre-cache offline assets.",
+                safetyNote: "Re-fetched from origin on next page load. Distinct from `WebsiteData/IndexedDB/` and `WebsiteData/LocalStorage/` (which contain real user data and are not touched).",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Cache API — MDN", url: "https://developer.mozilla.org/en-US/docs/Web/API/Cache", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "webkit.offline-app-cache", displayName: "Per-App WebKit AppCache",
+            ecosystem: .node, scope: .perAppCache,
+            matcher: .libraryCachesPerApp(subdir: "WebKit/OfflineWebApplicationCache"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Deprecated HTML5 Application Cache for WKWebView.",
+            iconAsset: "webkit",
+            brandTint: Color(red: 0x00/255, green: 0x73/255, blue: 0xE5/255),
+            languageKey: "javascript",
+            toolKey: "webkit",
+            item: ItemInfo(
+                description: "`~/Library/Caches/<bundle>/WebKit/OfflineWebApplicationCache/` is the deprecated HTML5 Application Cache (`<html manifest=…>`) store. Modern web stacks have moved on to Service Workers, but the directory is still created lazily by WebKit and lingers from older site-version manifests.",
+                safetyNote: "Safe to wipe — the spec is removed from modern browsers; if a site still relies on it, the manifest will be re-fetched on next load.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Application Cache — MDN (deprecated)", url: "https://developer.mozilla.org/en-US/docs/Web/HTML/Using_the_application_cache", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "webkit.service-worker-scripts", displayName: "Per-App WebKit Service Worker Scripts",
+            ecosystem: .node, scope: .perAppCache,
+            matcher: .libraryCachesPerApp(subdir: "WebKit/ServiceWorkers/Scripts"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "WKWebView cached Service Worker script bodies.",
+            iconAsset: "webkit",
+            brandTint: Color(red: 0x00/255, green: 0x73/255, blue: 0xE5/255),
+            languageKey: "javascript",
+            toolKey: "webkit",
+            item: ItemInfo(
+                description: "`~/Library/Caches/<bundle>/WebKit/ServiceWorkers/Scripts/` caches the JavaScript bodies of registered Service Workers. The companion registration database (`Database/`) at the same level holds the actual SW lifecycle state and isn't touched by this rule.",
+                safetyNote: "Re-fetched from origin on the next SW activation.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Service Worker API — MDN", url: "https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API", kind: .docs),
+                ]
+            )
+        ),
         // ── Sparkle update cache (per-app) ────────────────────────────────
         Rule(
             id: "sparkle.update-cache", displayName: "Per-App Sparkle Update Cache",

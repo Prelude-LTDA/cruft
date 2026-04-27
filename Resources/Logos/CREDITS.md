@@ -9,8 +9,8 @@ Used to identify each tool whose artifacts Cruft cleans up.
   DevOps tools (`pulumi.svg`, `terraform.svg`, `helm.svg`, `kubernetes.svg`,
   `google-cloud.svg`, `github.svg`, `github-copilot.svg`, `rancher.svg`), `expo.svg`,
   `android.svg`, `selenium.svg`, `scala.svg`, `conda.svg`, the game-engine marks
-  (`unity.svg`, `unrealengine.svg`, `godot.svg`), and the rest. Most are the
-  `*-icon.svg` icon-only variants where available.
+  (`unity.svg`, `unrealengine.svg`, `godot.svg`), `webkit.svg`, and the rest.
+  Most are the `*-icon.svg` icon-only variants where available.
 - **[lobehub/lobe-icons](https://github.com/lobehub/lobe-icons)** (MIT):
   - `codex-cli.svg` — OpenAI Codex glyph (vendor-specific, distinct from the generic OpenAI mark).
   - `gemini-cli.svg` — Google Gemini sparkle (icon-only colour variant).
