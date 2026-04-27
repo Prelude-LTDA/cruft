@@ -3,21 +3,19 @@ import AppKit
 
 struct MainWindowView: View {
     @Bindable var model: AppModel
-    @State private var showConfirm = false
-    @State private var pendingItems: [Finding] = []
     @Environment(\.openWindow) private var openWindow
 
-    private func requestConfirm() {
-        // Delete only acts on items that are currently visible — selections
-        // hidden by filters stay in the selection set but don't go to Trash.
-        let sel = model.effectiveSelectedFindings
-        guard !sel.isEmpty else { return }
-        pendingItems = sel
-        showConfirm = true
-    }
-
     var body: some View {
-        NavigationSplitView {
+        // Custom binding: NavigationSplitView wants
+        // `NavigationSplitViewVisibility`, the model holds a Bool.
+        // Two-way so the OS-side disclosure control and our menu stay
+        // in sync — the user can hide via either path and the label
+        // flips correctly.
+        let sidebarBinding = Binding<NavigationSplitViewVisibility>(
+            get: { model.sidebarVisible ? .all : .detailOnly },
+            set: { model.sidebarVisible = ($0 != .detailOnly) }
+        )
+        NavigationSplitView(columnVisibility: sidebarBinding) {
             SidebarView(model: model)
                 .navigationSplitViewColumnWidth(min: 220, ideal: 240, max: 300)
         } detail: {
@@ -35,39 +33,24 @@ struct MainWindowView: View {
         .searchable(text: $model.searchText,
                     placement: .toolbar,
                     prompt: "Search paths or projects")
-        .sheet(isPresented: $showConfirm) {
-            let items = pendingItems.isEmpty ? model.selectedFindings : pendingItems
+        // Confirmation sheet drives off the model so menu commands and
+        // the toolbar button trigger the exact same flow. Binding maps
+        // `pendingDeletion == nil` ↔ sheet not presented.
+        .sheet(isPresented: Binding(
+            get: { model.pendingDeletion != nil },
+            set: { if !$0 { model.cancelDeletionRequest() } }
+        )) {
+            let items = model.pendingDeletion ?? []
             ConfirmationSheet(items: items) {
-                showConfirm = false
+                model.cancelDeletionRequest()
                 Task { _ = await model.performDeletion(findings: items) }
             } cancel: {
-                showConfirm = false
+                model.cancelDeletionRequest()
             }
         }
-        .background { keyboardShortcuts }
         .onAppear {
             if model.phase == .idle { model.startScan() }
         }
-    }
-
-    /// Zero-size buttons that register keyboard shortcuts without taking
-    /// visible space. Clean way to attach global shortcuts when the visible
-    /// controls (Picker, etc.) can't carry `.keyboardShortcut` directly.
-    private var keyboardShortcuts: some View {
-        ZStack {
-            Button("By Project") {
-                model.useProjectGrouping = true
-            }
-            .keyboardShortcut("1", modifiers: .command)
-
-            Button("Flat") {
-                model.useProjectGrouping = false
-            }
-            .keyboardShortcut("2", modifiers: .command)
-        }
-        .frame(width: 0, height: 0)
-        .opacity(0)
-        .accessibilityHidden(true)
     }
 
     private var detailPane: some View {
@@ -91,7 +74,7 @@ struct MainWindowView: View {
                 }
 
             StatusLine(model: model) {
-                requestConfirm()
+                model.requestDeletionOfSelection()
             }
         }
     }
@@ -112,8 +95,10 @@ struct MainWindowView: View {
                 } label: {
                     Label("Scan", systemImage: "arrow.clockwise")
                 }
-                .help("Scan again (⌘R)")
-                .keyboardShortcut("r", modifiers: [.command])
+                // Shortcut lives on the menu item (CruftApp commands) so
+                // it's discoverable and doesn't double-register here.
+                // macOS surfaces the shortcut on hover automatically.
+                .help("Scan again")
             }
         }
         .customizationBehavior(.default)
@@ -127,7 +112,7 @@ struct MainWindowView: View {
             }
             .pickerStyle(.segmented)
             .labelStyle(.iconOnly)
-            .help("Group by project (⌘1) or flat view (⌘2)")
+            .help("Group by project or flat")
         }
         .customizationBehavior(.default)
 
@@ -135,13 +120,12 @@ struct MainWindowView: View {
 
         ToolbarItem(id: "trash", placement: .primaryAction) {
             Button {
-                requestConfirm()
+                model.requestDeletionOfSelection()
             } label: {
                 Label("Move to Trash", systemImage: "trash")
             }
             .disabled(model.selectedFindings.isEmpty)
-            .help("Move selected items to Trash (⌘⌫)")
-            .keyboardShortcut(.delete, modifiers: [.command])
+            .help("Move selected items to Trash")
         }
         .customizationBehavior(.default)
 
@@ -157,7 +141,7 @@ struct MainWindowView: View {
             // History scene itself (see CruftApp), which both auto-creates
             // the Window menu entry and routes the shortcut to opening
             // (or front-bringing) that singleton window.
-            .help("Show cleanup history (⌘Y)")
+            .help("Show cleanup history")
         }
         .customizationBehavior(.default)
 
@@ -172,8 +156,7 @@ struct MainWindowView: View {
             } label: {
                 Label("Info", systemImage: "sidebar.trailing")
             }
-            .help("Toggle info panel (⌘⌥I)")
-            .keyboardShortcut("i", modifiers: [.command, .option])
+            .help("Toggle info panel")
         }
         .customizationBehavior(.default)
     }

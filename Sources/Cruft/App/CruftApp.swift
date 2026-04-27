@@ -15,20 +15,71 @@ struct CruftApp: App {
         .windowToolbarStyle(.unified(showsTitle: true))
         .commands {
             CommandGroup(replacing: .newItem) {} // no "New Window"
+            // macOS 26 renders SF Symbols next to menu text when the
+            // Button's label is a `Label`. Icons mirror the toolbar
+            // glyphs for the same actions where one exists, so the
+            // visual vocabulary stays consistent across menus and chrome.
             CommandGroup(after: .appInfo) {
-                Button("Scan Now") { model.startScan() }
-                    .keyboardShortcut("r", modifiers: [.command])
+                Button { model.startScan() } label: {
+                    Label("Scan Now", systemImage: "arrow.clockwise")
+                }
+                .keyboardShortcut("r", modifiers: [.command])
             }
-            // Select All / Deselect All appended to Edit so they work from
-            // anywhere in the window without focus juggling.
+            // Deselect All + Move to Trash appended to Edit. We deliberately
+            // don't add our own Select All here — the system already provides
+            // one in the .pasteboard group, and SwiftUI's Table/List route
+            // its responder action (selectAll:) into the selection binding,
+            // so ⌘A Just Works while also picking up focus-aware behavior
+            // for free (⌘A in the search field selects text, ⌘A in the
+            // results selects rows).
             CommandGroup(after: .pasteboard) {
                 Divider()
-                Button("Select All") { model.selectAllVisible() }
-                    .keyboardShortcut("a", modifiers: [.command])
-                    .disabled(model.findings.isEmpty)
-                Button("Deselect All") { model.deselectAll() }
-                    .keyboardShortcut("a", modifiers: [.command, .shift])
-                    .disabled(model.selection.isEmpty)
+                Button { model.deselectAll() } label: {
+                    // Outline version of the StatusLine's clear-selection
+                    // glyph (`xmark.circle.fill`) — same family, sized for
+                    // the menu's lighter-weight context.
+                    Label("Deselect All", systemImage: "xmark.circle")
+                }
+                .keyboardShortcut("a", modifiers: [.command, .shift])
+                .disabled(model.selection.isEmpty)
+                Divider()
+                Button { model.requestDeletionOfSelection() } label: {
+                    Label("Move to Trash", systemImage: "trash")
+                }
+                .keyboardShortcut(.delete, modifiers: [.command])
+                .disabled(model.effectiveSelectedFindings.isEmpty)
+            }
+            // View menu: view-mode picker, then both panel toggles
+            // grouped together at the bottom (consistent vocabulary —
+            // both flip Show/Hide labels with state, both use the
+            // matching `sidebar.*` glyph).
+            CommandGroup(after: .sidebar) {
+                Divider()
+                Button { model.useProjectGrouping = true } label: {
+                    Label("By Project", systemImage: "text.below.folder")
+                }
+                .keyboardShortcut("1", modifiers: [.command])
+                Button { model.useProjectGrouping = false } label: {
+                    Label("Flat", systemImage: "list.bullet")
+                }
+                .keyboardShortcut("2", modifiers: [.command])
+                Divider()
+                Button {
+                    // `withAnimation` is required for NavigationSplitView's
+                    // columnVisibility binding to animate — without it,
+                    // programmatic flips snap. AppKit's toggleSidebar:
+                    // animates internally; the SwiftUI-binding path doesn't.
+                    withAnimation { model.sidebarVisible.toggle() }
+                } label: {
+                    Label(model.sidebarVisible ? "Hide Sidebar" : "Show Sidebar",
+                          systemImage: "sidebar.leading")
+                }
+                .keyboardShortcut("s", modifiers: [.command, .control])
+                Button { model.infoPanelVisible.toggle() } label: {
+                    Label(model.infoPanelVisible ? "Hide Info Panel" : "Show Info Panel",
+                          systemImage: "sidebar.trailing")
+                }
+                .keyboardShortcut("i", modifiers: [.command, .option])
             }
         }
 

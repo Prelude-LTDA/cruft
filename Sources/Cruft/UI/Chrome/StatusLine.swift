@@ -33,7 +33,7 @@ struct StatusLine: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("Deselect all (⌘⇧A)")
+                .help("Deselect all")
             }
         }
         .padding(.horizontal, 14)

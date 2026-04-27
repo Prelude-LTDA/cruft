@@ -108,6 +108,15 @@ final class AppModel {
             UserDefaults.standard.set(infoPanelVisible, forKey: Self.infoPanelKey)
         }
     }
+    /// Sidebar (sources list) visibility. Drives the column-visibility
+    /// binding on `NavigationSplitView`, so the OS-side disclosure
+    /// triangle and our menu command stay in sync. Persists across
+    /// launches like the other panel toggles.
+    var sidebarVisible: Bool = AppModel.loadSidebarVisible() {
+        didSet {
+            UserDefaults.standard.set(sidebarVisible, forKey: Self.sidebarKey)
+        }
+    }
     let rules: [Rule] = RuleCatalog.rules
     private let history = HistoryStore()
 
@@ -116,11 +125,30 @@ final class AppModel {
     /// and after every successful deletion.
     private(set) var historyEntries: [HistoryEntry] = []
 
+    /// Items currently awaiting confirmation in the deletion sheet, or nil
+    /// when no sheet is up. Lives on the model (not a view) so menu
+    /// commands and the toolbar button drive the exact same flow.
+    var pendingDeletion: [Finding]? = nil
+
+    /// Snapshot the visible selection and surface the confirmation sheet.
+    /// Selections hidden by filters stay in `selection` but don't go into
+    /// the sheet, mirroring `effectiveSelectedFindings`.
+    func requestDeletionOfSelection() {
+        let sel = effectiveSelectedFindings
+        guard !sel.isEmpty else { return }
+        pendingDeletion = sel
+    }
+
+    func cancelDeletionRequest() {
+        pendingDeletion = nil
+    }
+
     private static let scanRootsKey = "regen.scanRoots.v1"
     private static let spotlightKey = "regen.spotlightEnabled.v1"
     private static let globalCachesKey = "regen.globalCachesEnabled.v1"
     private static let systemCachesKey = "regen.systemCachesEnabled.v1"
     private static let infoPanelKey = "regen.infoPanelVisible.v1"
+    private static let sidebarKey = "regen.sidebarVisible.v1"
     private static let ecosystemOrderKey = "regen.ecosystemOrder.v1"
 
     private static func loadScanRoots() -> [ScanRoot] {
@@ -170,6 +198,13 @@ final class AppModel {
         // opt in via the toolbar button.
         guard UserDefaults.standard.object(forKey: infoPanelKey) != nil else { return false }
         return UserDefaults.standard.bool(forKey: infoPanelKey)
+    }
+
+    private static func loadSidebarVisible() -> Bool {
+        // Default on — the sidebar is the primary configuration surface
+        // (scan roots + source toggles).
+        guard UserDefaults.standard.object(forKey: sidebarKey) != nil else { return true }
+        return UserDefaults.standard.bool(forKey: sidebarKey)
     }
 
     /// Persist the current scan roots and kick off a fresh scan.
@@ -375,9 +410,10 @@ final class AppModel {
 
     // MARK: - Selection helpers
 
-    func selectAllVisible() {
-        selection = Set(filteredFindings.map(\.id))
-    }
+    // Select All is handled by the system Edit > Select All command,
+    // which routes through `selectAll:` on the responder chain — Table
+    // and List implement it natively against the selection binding. We
+    // only own Deselect, since "select none" isn't a system standard.
 
     func deselectAll() {
         selection.removeAll()
