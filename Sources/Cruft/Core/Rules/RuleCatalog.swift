@@ -374,6 +374,24 @@ enum RuleCatalog {
                 ]
             )
         ),
+        Rule(
+            id: "node.deno-cache", displayName: "Deno Cache",
+            ecosystem: .node, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/deno"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "Deno's user cache: remote modules, npm packages, compile cache.",
+            iconAsset: "deno",
+            languageKey: "javascript",
+            toolKey: "deno",
+            item: ItemInfo(
+                description: "`~/Library/Caches/deno` is Deno's combined cache: `deps/` (downloaded ESM modules from URL imports), `gen/` (TypeScript→JavaScript compile cache), `npm/` (npm-compatible package store), and Deno KV files. Override path via `$DENO_DIR`.",
+                safetyNote: "Modules are re-fetched on the next `deno cache <entry>` or first run of any script that imports them.",
+                regenCommand: "deno cache <entry>",
+                links: [
+                    InfoLink(title: "Deno — DENO_DIR", url: "https://docs.deno.com/runtime/manual/tools/cache/", kind: .docs),
+                ]
+            )
+        ),
     ]
 
     // MARK: - Apple platform (Swift / Objective-C / Xcode / CocoaPods / Simulator)
@@ -871,6 +889,24 @@ enum RuleCatalog {
                 ]
             )
         ),
+        Rule(
+            id: "rust.sccache", displayName: "sccache",
+            ecosystem: .rust, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/Mozilla.sccache"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Shared compiler cache for Rust / C / C++ / CUDA.",
+            iconAsset: "sccache",
+            languageKey: "rust",
+            toolKey: "sccache",
+            item: ItemInfo(
+                description: "`~/Library/Caches/Mozilla.sccache` is sccache's local on-disk cache of hashed compile artifacts. Despite the Rust association, sccache works for C, C++, and CUDA too. Capped by `SCCACHE_CACHE_SIZE` (default 10 GB).",
+                safetyNote: "Repopulated on the next compile; only a perf hit while the cache rebuilds.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "sccache — local cache", url: "https://github.com/mozilla/sccache/blob/main/docs/Local.md", kind: .docs),
+                ]
+            )
+        ),
     ]
 
     // MARK: - Python
@@ -1006,6 +1042,79 @@ enum RuleCatalog {
                 ]
             )
         ),
+        Rule(
+            id: "py.pipenv-cache", displayName: "pipenv Cache",
+            ecosystem: .python, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".cache/pipenv"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "pipenv's HTTP wheel + hash cache.",
+            iconAsset: "pipenv",
+            languageKey: "python",
+            toolKey: "pipenv",
+            item: ItemInfo(
+                description: "`~/.cache/pipenv` holds pipenv's HTTP wheel cache, hash cache, and cached packages. Notorious for unbounded growth — issue tracker reports of 16+ GB after long use are common. Override with `PIPENV_CACHE_DIR`.",
+                safetyNote: "Re-downloaded from PyPI on the next `pipenv install`.",
+                regenCommand: "pipenv install",
+                links: [
+                    InfoLink(title: "pipenv configuration", url: "https://pipenv.pypa.io/en/latest/configuration.html", kind: .docs),
+                    InfoLink(title: "pipenv #3655 — unbounded cache growth", url: "https://github.com/pypa/pipenv/issues/3655", kind: .issue),
+                ]
+            )
+        ),
+        Rule(
+            id: "py.pdm-cache", displayName: "PDM Cache",
+            ecosystem: .python, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".cache/pdm"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "PDM's HTTP cache + downloaded wheels + metadata.",
+            iconAsset: "pdm",
+            languageKey: "python",
+            toolKey: "pdm",
+            item: ItemInfo(
+                description: "`~/.cache/pdm` holds PDM's HTTP cache, downloaded wheels, package metadata, and hash cache. Known to grow large (issue #1301). PDM uses XDG-style paths even on macOS.",
+                safetyNote: "Refilled from PyPI on the next `pdm install`.",
+                regenCommand: "pdm install",
+                links: [
+                    InfoLink(title: "PDM configuration", url: "https://pdm-project.org/en/latest/reference/configuration/", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "py.conda-pkgs", displayName: "Conda Package Cache",
+            ecosystem: .python, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".conda/pkgs"),
+            action: .trash, tier: .high, aggregation: .none,
+            notes: "Downloaded conda package archives + extracted dirs.",
+            iconAsset: "conda",
+            languageKey: "python",
+            toolKey: "conda",
+            item: ItemInfo(
+                description: "`~/.conda/pkgs` stores downloaded `.conda`/`.tar.bz2` package archives plus extracted package directories used as the link source for conda environments. One of the largest offenders on conda machines (1–20 GB typical).",
+                safetyNote: "Don't run while a conda env that hardlinks into this dir is active — re-create the env after cleaning if needed. Equivalent to `conda clean -p`.",
+                regenCommand: "conda clean -p",
+                links: [
+                    InfoLink(title: "Conda — custom env/pkg locations", url: "https://docs.conda.io/projects/conda/en/stable/user-guide/configuration/custom-env-and-pkg-locations.html", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "py.pixi-cache", displayName: "Pixi / Rattler Cache",
+            ecosystem: .python, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".cache/rattler/cache"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "Pixi's conda packages + repodata + uv + http cache.",
+            iconAsset: "pixi",
+            languageKey: "python",
+            toolKey: "pixi",
+            item: ItemInfo(
+                description: "`~/.cache/rattler/cache` is Pixi's combined cache: `pkgs/` (conda packages), `repodata/`, `uv-cache/`, and `http-cache/`. Override with `$PIXI_CACHE_DIR` or `$RATTLER_CACHE_DIR`.",
+                safetyNote: "Refilled by the next `pixi install`.",
+                regenCommand: "pixi install",
+                links: [
+                    InfoLink(title: "Pixi documentation", url: "https://pixi.sh/", kind: .official),
+                ]
+            )
+        ),
     ]
 
     // MARK: - Go
@@ -1045,6 +1154,42 @@ enum RuleCatalog {
                 regenCommand: "go clean -modcache",
                 links: [
                     InfoLink(title: "Go Modules reference — go clean -modcache", url: "https://go.dev/ref/mod#go-clean-modcache", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "go.golangci-lint-cache", displayName: "golangci-lint Cache",
+            ecosystem: .go, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/golangci-lint"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Per-package lint result cache.",
+            iconAsset: "golangci-lint",
+            languageKey: "go",
+            toolKey: "golangci-lint",
+            item: ItemInfo(
+                description: "`~/Library/Caches/golangci-lint` caches per-package lint results and intermediate analysis data so subsequent runs don't re-analyze unchanged code. Override with `$GOLANGCI_LINT_CACHE`.",
+                safetyNote: "Refilled on the next lint run; only a perf hit.",
+                regenCommand: "golangci-lint cache clean",
+                links: [
+                    InfoLink(title: "golangci-lint", url: "https://golangci-lint.run/", kind: .official),
+                ]
+            )
+        ),
+        Rule(
+            id: "go.gopls-cache", displayName: "gopls Cache",
+            ecosystem: .go, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/gopls"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "gopls LSP analysis cache.",
+            iconAsset: "go",
+            languageKey: "go",
+            toolKey: "gopls",
+            item: ItemInfo(
+                description: "`~/Library/Caches/gopls` is the on-disk cache for gopls (the Go language server) — parsed packages, type information, references. Used by VS Code, Neovim, and other gopls-backed editors.",
+                safetyNote: "Editor restart re-indexes lazily; only a perf hit.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "gopls — Go language server", url: "https://pkg.go.dev/golang.org/x/tools/gopls", kind: .docs),
                 ]
             )
         ),
@@ -1150,6 +1295,96 @@ enum RuleCatalog {
                 regenCommand: "mvn dependency:resolve",
                 links: [
                     InfoLink(title: "Maven — introduction to repositories", url: "https://maven.apache.org/guides/introduction/introduction-to-repositories.html", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "jvm.coursier-cache", displayName: "Coursier Cache",
+            ecosystem: .java, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/Coursier/v1"),
+            action: .trash, tier: .high, aggregation: .none,
+            notes: "Resolved JARs/POMs/sources shared across all Scala tooling.",
+            iconAsset: "coursier",
+            languageKey: "java",
+            toolKey: "coursier",
+            item: ItemInfo(
+                description: "`~/Library/Caches/Coursier/v1` holds resolved JARs, POMs, and source artifacts shared by every Coursier-backed JVM tool — sbt, Mill, Bloop, Metals, Scala-CLI. Often the largest JVM cache on a Scala-heavy machine (1–10+ GB).",
+                safetyNote: "Re-downloaded from Maven Central / configured resolvers on the next dependency resolution.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Coursier — cache docs", url: "https://get-coursier.io/docs/cache", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "jvm.ivy2", displayName: "Ivy Resolution Cache",
+            ecosystem: .java, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".ivy2"),
+            action: .trash, tier: .high, aggregation: .none,
+            notes: "sbt's classic Ivy cache (separate from Coursier).",
+            iconAsset: "sbt",
+            languageKey: "java",
+            toolKey: "sbt",
+            item: ItemInfo(
+                description: "`~/.ivy2` is sbt's classic Ivy resolution cache (`cache/`, `local/`) — the older sibling of Coursier. Many sbt builds still use it. Override with `sbt.ivy.home`.",
+                safetyNote: "sbt refills on demand via `sbt update`.",
+                regenCommand: "sbt update",
+                links: [
+                    InfoLink(title: "sbt — cached resolution", url: "https://www.scala-sbt.org/1.x/docs/Cached-Resolution.html", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "jvm.sbt-boot", displayName: "sbt Boot Directories",
+            ecosystem: .java, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".sbt"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "sbt launcher boot dirs + minigraph cache.",
+            iconAsset: "sbt",
+            languageKey: "java",
+            toolKey: "sbt",
+            item: ItemInfo(
+                description: "`~/.sbt` holds sbt's launcher boot directories (`boot/` — one per Scala/sbt version pair) and minigraph dependency cache (`1.0/dependency/`). Bootstrapping a fresh sbt is slow.",
+                safetyNote: "sbt re-bootstraps on the next launch — first run takes minutes.",
+                regenCommand: "sbt",
+                links: [
+                    InfoLink(title: "sbt — launcher configuration", url: "https://www.scala-sbt.org/1.x/docs/Launcher-Configuration.html", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "jvm.scala-cli-cache", displayName: "Scala CLI Cache",
+            ecosystem: .java, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/ScalaCli"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Bloop session, BSP state, prebuilts.",
+            iconAsset: "scala-cli",
+            languageKey: "java",
+            toolKey: "scala-cli",
+            item: ItemInfo(
+                description: "`~/Library/Caches/ScalaCli` is Scala CLI's working state — Bloop server workdir, scripts cache, downloaded JVMs/Scala compilers used by `scala-cli`. Distinct from Coursier (which Scala CLI also uses for dependency JARs).",
+                safetyNote: "Recreated on the next `scala-cli` invocation.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Scala CLI — internals", url: "https://scala-cli.virtuslab.org/docs/guides/advanced/internals/", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "jvm.metals-cache", displayName: "Metals Cache",
+            ecosystem: .java, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/org.scalameta.metals"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Metals trace logs, BSP cache, indexed symbols.",
+            iconAsset: "metals",
+            languageKey: "java",
+            toolKey: "metals",
+            item: ItemInfo(
+                description: "`~/Library/Caches/org.scalameta.metals` holds Metals' trace logs, BSP cache, and indexed symbols. Used by VS Code (Metals extension), Neovim, and other Metals-backed editors for Scala.",
+                safetyNote: "Recreated when Metals re-imports the build (next editor open of a Scala project).",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Metals — Scala language server", url: "https://scalameta.org/metals/", kind: .official),
                 ]
             )
         ),
