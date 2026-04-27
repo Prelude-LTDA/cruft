@@ -592,6 +592,187 @@ enum RuleCatalog {
                 links: []
             )
         ),
+        Rule(
+            id: "xcode.modulecache", displayName: "Module Cache",
+            ecosystem: .apple, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Developer/Xcode/DerivedData/ModuleCache.noindex"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Cross-project precompiled Clang/Swift modules.",
+            iconAsset: "xcode",
+            brandTint: xcodeBlue,
+            languageKey: "swift",
+            toolKey: "xcode",
+            item: ItemInfo(
+                description: "`DerivedData/ModuleCache.noindex` stores precompiled Clang/Swift modules (`.pcm`, `.swiftmodule`) shared across every project's build. Sits next to per-project `DerivedData` folders but lives independently — clearing one project's `DerivedData` doesn't touch this.",
+                safetyNote: "Auto-rebuilt by the Xcode build system on next compile of each project; first build after clearing is noticeably slower while the cache repopulates.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Xcode — build system", url: "https://developer.apple.com/documentation/xcode/build-system", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "xcode.compilationcache", displayName: "Compilation Cache",
+            ecosystem: .apple, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Developer/Xcode/DerivedData/CompilationCache.noindex"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Xcode 16+ explicit-modules cache.",
+            iconAsset: "xcode",
+            brandTint: xcodeBlue,
+            languageKey: "swift",
+            toolKey: "xcode",
+            item: ItemInfo(
+                description: "`DerivedData/CompilationCache.noindex` is the explicit-modules / cached-compilation store added in Xcode 16. It accelerates builds by reusing compiled outputs across targets that share the same input fingerprint.",
+                safetyNote: "Auto-rebuilt by Xcode; subsequent compiles will be slower until the cache repopulates.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "WWDC23 — Demystify explicitly built modules", url: "https://developer.apple.com/videos/play/wwdc2023/10421/", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "xcode.symbolcache", displayName: "Symbol Cache",
+            ecosystem: .apple, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Developer/Xcode/DerivedData/SymbolCache.noindex"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Cached symbol indexes for Xcode debugger/symbolicator.",
+            iconAsset: "xcode",
+            brandTint: xcodeBlue,
+            languageKey: "swift",
+            toolKey: "xcode",
+            item: ItemInfo(
+                description: "`DerivedData/SymbolCache.noindex` caches symbol indexes used by Xcode's debugger and symbolicator across projects.",
+                safetyNote: "Rebuilt on demand whenever Xcode needs symbols.",
+                regenCommand: nil,
+                links: []
+            )
+        ),
+        Rule(
+            id: "xcode.previews", displayName: "SwiftUI Previews",
+            ecosystem: .apple, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Developer/Xcode/UserData/Previews"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Cross-project SwiftUI Preview shim build artifacts.",
+            iconAsset: "xcode",
+            brandTint: xcodeBlue,
+            languageKey: "swift",
+            toolKey: "xcode",
+            item: ItemInfo(
+                description: "`Xcode/UserData/Previews` holds the per-target shim build products that power SwiftUI's `#Preview` canvas. The cross-project tree accumulates as different SwiftUI projects render previews; per-project preview build products live alongside their `DerivedData`.",
+                safetyNote: "Auto-rebuilt on the next preview render in any project. SwiftUI previews simply take an extra moment to come up the first time after clearing.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "SwiftUI Previews — Apple Developer", url: "https://developer.apple.com/documentation/swiftui/previews-in-xcode", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "xcode.coresimulator-logs", displayName: "CoreSimulator Logs",
+            ecosystem: .apple, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Logs/CoreSimulator"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Per-device simulator runtime logs.",
+            sfSymbol: "iphone.gen3",
+            brandTint: xcodeBlue,
+            languageKey: "swift",
+            toolKey: "xcode",
+            item: ItemInfo(
+                description: "`~/Library/Logs/CoreSimulator` contains per-device subdirectories of simulator runtime logs plus a master `CoreSimulator.log`. Heavy during UI test runs and CI-style local invocations.",
+                safetyNote: "Recreated on the next simulator boot; logs are diagnostic only and don't affect simulator state.",
+                regenCommand: nil,
+                links: []
+            )
+        ),
+        Rule(
+            id: "xcode.fscacheddata", displayName: "Xcode FS Cache",
+            ecosystem: .apple, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/com.apple.dt.Xcode/fsCachedData"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Xcode's generic NSURLCache-style storage.",
+            iconAsset: "xcode",
+            brandTint: xcodeBlue,
+            languageKey: "swift",
+            toolKey: "xcode",
+            item: ItemInfo(
+                description: "`~/Library/Caches/com.apple.dt.Xcode/fsCachedData` is Xcode's generic NSURLCache-style storage — Asset Catalog thumbnails, account avatars, remotely-fetched resources, and various small artifacts. The sibling `Cache.db*` SQLite files in the same directory follow the same lifecycle.",
+                safetyNote: "Refetched on demand by Xcode.",
+                regenCommand: nil,
+                links: []
+            )
+        ),
+        Rule(
+            id: "swiftpm.user-cache", displayName: "SwiftPM User Cache",
+            ecosystem: .apple, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/org.swift.swiftpm"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "User-level SwiftPM cache (manifests, repos, package metadata).",
+            iconAsset: "swift",
+            // Inherits Swift orange from ecosystem
+            languageKey: "swift",
+            toolKey: "swiftpm",
+            item: ItemInfo(
+                description: "`~/Library/Caches/org.swift.swiftpm` holds SwiftPM-the-CLI's user cache: `manifests/`, `repositories/` (cloned dependency repos), `package-collection.db`, and `package-metadata/`. Used by `swift build` and Xcode alike — distinct from the existing `xcode.swiftpm-cache` rule, which targets Xcode's per-IDE SwiftPM directory.",
+                safetyNote: "SwiftPM re-clones repositories and refetches metadata on the next package resolve. Pinned revisions in `Package.resolved` ensure deterministic re-fetch.",
+                regenCommand: "swift package resolve",
+                links: [
+                    InfoLink(title: "Swift Package Manager — swift.org", url: "https://www.swift.org/package-manager/", kind: .official),
+                ]
+            )
+        ),
+        Rule(
+            id: "cocoapods.xcode-cache", displayName: "CocoaPods User Cache",
+            ecosystem: .apple, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/CocoaPods"),
+            action: .trash, tier: .high, aggregation: .none,
+            notes: "Pod source archives + extracted sources cached for reuse.",
+            iconAsset: "cocoapods",
+            brandTint: cocoapodsRed,
+            languageKey: "swift",
+            toolKey: "cocoapods",
+            item: ItemInfo(
+                description: "`~/Library/Caches/CocoaPods` is CocoaPods' user-level cache of downloaded pod source archives (`Pods/Cache/`) plus reusable working copies. Distinct from `~/.cocoapods` (master spec repo) and the per-project `Pods/` directory — equivalent to running `pod cache clean --all`.",
+                safetyNote: "Re-downloaded from the source repo (often GitHub) on the next `pod install`. Heavy iOS users can see this reach several gigabytes.",
+                regenCommand: "pod install",
+                links: [
+                    InfoLink(title: "pod cache — CocoaPods CLI", url: "https://guides.cocoapods.org/terminal/commands.html#pod_cache", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "apple.diagnostic-reports", displayName: "Diagnostic Reports",
+            ecosystem: .apple, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Logs/DiagnosticReports"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "User-process crash reports (.ips files).",
+            sfSymbol: "exclamationmark.triangle",
+            // No brand tint — system logs, fallback to ecosystem default
+            languageKey: "swift",
+            item: ItemInfo(
+                description: "`~/Library/Logs/DiagnosticReports` collects `.ips` crash reports for user-launched processes. Disproportionately populated by debug builds, fuzzers, and dev tools that crash often during iteration. The system-wide `/Library/Logs/DiagnosticReports/` is owned by root and not touched here.",
+                safetyNote: "Generated fresh by `ReportCrash` on the next crash; safe to wipe — these are diagnostic records of past failures, not anything macOS depends on.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Acquiring crash reports — Apple Developer", url: "https://developer.apple.com/documentation/xcode/acquiring-crash-reports-and-diagnostic-logs", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "apple.spindump-user", displayName: "Spin Reports",
+            ecosystem: .apple, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Logs/Spin Reports"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Spindump samples from hung user processes.",
+            sfSymbol: "tornado",
+            languageKey: "swift",
+            item: ItemInfo(
+                description: "`~/Library/Logs/Spin Reports` stores spindump samples macOS captures when a user process becomes unresponsive. Common with debug GUI app builds that hang under the debugger.",
+                safetyNote: "macOS regenerates a fresh report on the next hang. The samples here are diagnostic-only.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "spindump(8) — man page", url: "https://www.unix.com/man-page/osx/8/spindump/", kind: .docs),
+                ]
+            )
+        ),
     ]
 
     // MARK: - Rust
