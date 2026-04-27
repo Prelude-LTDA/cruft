@@ -54,6 +54,34 @@ enum Matcher: Sendable, Hashable {
     /// can't see.
     case darwinCachePerApp(subdir: String)
 
+    /// Per-app subdirectory inside `~/Library/Caches/<app>/`. Probes every
+    /// first-level child and emits one finding per match. Used for things
+    /// like Sparkle's update download cache (`<bundle>/org.sparkle-project.Sparkle/`)
+    /// that's installed inside each updatable app's user-cache directory.
+    case libraryCachesPerApp(subdir: String)
+
+    /// Per-app subdirectory inside `~/Library/Application Support/<app>/`.
+    /// Probes every first-level child and emits one finding per match. The
+    /// `<app>` segment is a display name for many apps (`Discord/`, `Slack/`)
+    /// and a bundle ID for others — the matcher doesn't care, it just walks
+    /// the children. Used for the Chromium cache trio (`Cache/`, `Code Cache/`,
+    /// `GPUCache/`) that Electron apps universally inherit and that native
+    /// apps occasionally use too.
+    case libraryAppSupportPerApp(subdir: String)
+
+    /// True for matchers that emit one finding per app/bundle and where the
+    /// last path component is a generic subdir name (`Cache`, `com.apple.metal`,
+    /// `org.sparkle-project.Sparkle`). The UI uses this to format the row
+    /// title as `<bundle> · <subdir>` so apps stay distinguishable.
+    var isPerBundle: Bool {
+        switch self {
+        case .darwinCachePerApp, .libraryCachesPerApp, .libraryAppSupportPerApp:
+            return true
+        default:
+            return false
+        }
+    }
+
     /// Glob pattern (gitignore-style) used sparingly — currently for `.egg-info`.
     case glob(pattern: String)
 

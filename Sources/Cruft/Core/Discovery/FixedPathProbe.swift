@@ -102,26 +102,44 @@ struct FixedPathProbe: Sendable {
                 guard let base = Self.darwinUserCacheDir else { continue }
                 // Trim trailing `/` for clean concatenation.
                 let baseDir = base.hasSuffix("/") ? String(base.dropLast()) : base
-                guard let bundles = try? FileManager.default.contentsOfDirectory(atPath: baseDir)
-                else { continue }
-                for bundle in bundles where !bundle.hasPrefix(".") {
-                    // Skip the framework-name top-level entries (`com.apple.metal`,
-                    // `com.apple.imageio`, …) — those are the global pool, owned
-                    // by the sibling `.darwinCachePath` rule. We only want
-                    // bundle-IDs whose own cache contains the named subdir.
-                    if bundle == subdir { continue }
-                    let candidate = "\(baseDir)/\(bundle)/\(subdir)"
-                    var isDir: ObjCBool = false
-                    if FileManager.default.fileExists(atPath: candidate, isDirectory: &isDir),
-                       isDir.boolValue {
-                        out.append((r, URL(fileURLWithPath: candidate)))
-                    }
-                }
+                Self.probePerBundle(rule: r, root: baseDir, subdir: subdir, into: &out)
+
+            case let .libraryCachesPerApp(subdir):
+                let root = "\(home)/Library/Caches"
+                Self.probePerBundle(rule: r, root: root, subdir: subdir, into: &out)
+
+            case let .libraryAppSupportPerApp(subdir):
+                let root = "\(home)/Library/Application Support"
+                Self.probePerBundle(rule: r, root: root, subdir: subdir, into: &out)
 
             default:
                 continue
             }
         }
         return out
+    }
+
+    /// Walks `root`'s direct children and emits `(rule, child/subdir)` for
+    /// every child whose `<child>/<subdir>` exists as a directory. Skips
+    /// dotfiles and any child whose name happens to equal the subdir we're
+    /// looking for (defends against framework-name top-levels in the
+    /// Darwin cache root colliding with a per-bundle rule).
+    private static func probePerBundle(
+        rule: Rule,
+        root: String,
+        subdir: String,
+        into out: inout [(Rule, URL)]
+    ) {
+        guard let bundles = try? FileManager.default.contentsOfDirectory(atPath: root)
+        else { return }
+        for bundle in bundles where !bundle.hasPrefix(".") {
+            if bundle == subdir { continue }
+            let candidate = "\(root)/\(bundle)/\(subdir)"
+            var isDir: ObjCBool = false
+            if FileManager.default.fileExists(atPath: candidate, isDirectory: &isDir),
+               isDir.boolValue {
+                out.append((rule, URL(fileURLWithPath: candidate)))
+            }
+        }
     }
 }

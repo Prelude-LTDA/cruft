@@ -67,21 +67,20 @@ struct Finding: Sendable, Hashable, Identifiable {
     var lastCleanedAt: Date? = nil
 
     var displayName: String {
-        let url = URL(fileURLWithPath: presentationPath)
-        let last = url.lastPathComponent
-        // Per-bundle Darwin caches live at `<bundle-id>/<framework-id>`
-        // (e.g. `ai.elementlabs.lmstudio/com.apple.metal`). Both segments
-        // look like reverse-DNS — surface the parent so rows that share a
-        // framework subdir stay distinguishable in the grouped row title.
-        // Scoped to /var/folders paths so existing rules aren't affected.
-        if last.contains("."),
-           presentationPath.contains("/folders/") {
-            let parent = url.deletingLastPathComponent().lastPathComponent
-            if parent.contains(".") {
-                return "\(parent) · \(last)"
-            }
+        URL(fileURLWithPath: presentationPath).lastPathComponent
+    }
+
+    /// For per-bundle findings (`<bundle>/com.apple.metal`,
+    /// `<App>/Cache`, …) returns the parent path segment — i.e. the
+    /// bundle ID or display-name folder that owns the cache. nil for
+    /// every other finding. Used by the grouped view to bucket per-app
+    /// findings under an app header.
+    var bundleSegment: String? {
+        guard RuleCatalog.rule(id: ruleId)?.matcher.isPerBundle == true else {
+            return nil
         }
-        return last
+        let url = URL(fileURLWithPath: presentationPath)
+        return url.deletingLastPathComponent().lastPathComponent
     }
 }
 

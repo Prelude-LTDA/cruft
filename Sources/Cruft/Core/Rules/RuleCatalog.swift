@@ -34,7 +34,14 @@ enum RuleCatalog {
         return out
     }()
 
-    static func rule(id: String) -> Rule? { rules.first { $0.id == id } }
+    /// O(1) id → Rule lookup. Built once from `rules`. Hot path for
+    /// `Finding.displayName` (called per row per render) and for the
+    /// `sourceIsEnabled` filter (called per finding per filter pass).
+    static let rulesByID: [String: Rule] = Dictionary(
+        uniqueKeysWithValues: rules.map { ($0.id, $0) }
+    )
+
+    static func rule(id: String) -> Rule? { rulesByID[id] }
 
     // MARK: - Node family
 
@@ -4972,6 +4979,178 @@ enum RuleCatalog {
                 regenCommand: nil,
                 links: [
                     InfoLink(title: "MetalFX — Apple Developer", url: "https://developer.apple.com/documentation/metalfx", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "metal.per-app-gpuarchiver", displayName: "Per-App GPU Archiver Cache",
+            ecosystem: .gameDev, scope: .perAppCache,
+            matcher: .darwinCachePerApp(subdir: "com.apple.gpuarchiver"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Apple GPU archiver — serialised pipeline state per app.",
+            iconAsset: "metal",
+            brandTint: metalSilver,
+            languageKey: "swift",
+            toolKey: "metal",
+            item: ItemInfo(
+                description: "Per-app `com.apple.gpuarchiver/` directories store serialised GPU pipeline-state archives produced by Apple's pipeline-archiver / Metal binary archive APIs. Distinct from the AIR shader cache (`com.apple.metal/`) — this is the ahead-of-time pipeline serialization surface used by some games and graphics-heavy apps.",
+                safetyNote: "Apps regenerate or re-fetch the archive lazily on next launch — perf hit only.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "MTLBinaryArchive — Apple Developer", url: "https://developer.apple.com/documentation/metal/mtlbinaryarchive", kind: .docs),
+                ]
+            )
+        ),
+        // ── Per-app Electron / Chromium caches ────────────────────────────
+        Rule(
+            id: "electron.cache", displayName: "Per-App Chromium Web Cache",
+            ecosystem: .node, scope: .perAppCache,
+            matcher: .libraryAppSupportPerApp(subdir: "Cache"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Per-app Cache/ in Application Support — Chromium HTTP cache (Electron + native).",
+            iconAsset: "electron",
+            brandTint: Color(red: 0x47/255, green: 0x84/255, blue: 0x8F/255),
+            languageKey: "javascript",
+            toolKey: "electron",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/<app>/Cache/` is the Chromium HTTP cache that every Electron-based desktop app inherits (Discord, Slack, Linear, Notion, Figma, Postman, Bruno, the Claude desktop app, …). Some native macOS apps use the same directory name for HTTP caching too — equally safe to clear.",
+                safetyNote: "Re-fetched from network on next launch.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Electron — userData paths", url: "https://www.electronjs.org/docs/latest/api/app#appgetpathname", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "electron.code-cache", displayName: "Per-App JS/V8 Compile Cache",
+            ecosystem: .node, scope: .perAppCache,
+            matcher: .libraryAppSupportPerApp(subdir: "Code Cache"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Per-app Code Cache/ — Chromium V8 bytecode cache.",
+            iconAsset: "electron",
+            brandTint: Color(red: 0x47/255, green: 0x84/255, blue: 0x8F/255),
+            languageKey: "javascript",
+            toolKey: "electron",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/<app>/Code Cache/` is V8's compiled-JavaScript bytecode cache (`js/` + `wasm/` subdirs). Chromium-specific — found in Electron apps and CEF-based hosts. Auto-rebuilt by V8 the next time the app loads its scripts.",
+                safetyNote: "First launch after clearing is marginally slower while V8 recompiles the app's JS.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "V8 — code caching", url: "https://v8.dev/blog/improved-code-caching", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "electron.gpu-cache", displayName: "Per-App Chromium GPU Cache",
+            ecosystem: .node, scope: .perAppCache,
+            matcher: .libraryAppSupportPerApp(subdir: "GPUCache"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Per-app GPUCache/ — Chromium shader / driver cache (Electron-side, distinct from Metal).",
+            iconAsset: "electron",
+            brandTint: Color(red: 0x47/255, green: 0x84/255, blue: 0x8F/255),
+            languageKey: "javascript",
+            toolKey: "electron",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/<app>/GPUCache/` is the Chromium-level GPU shader/driver cache used by Electron apps. Distinct from the underlying Metal AIR cache that the same app's renderer process also writes — different layer, both regenerable. Sibling caches `DawnGraphiteCache/` and `DawnWebGPUCache/` are catalogued separately.",
+                safetyNote: "Recompiled on demand by Chromium's GPU process on the next launch.",
+                regenCommand: nil,
+                links: []
+            )
+        ),
+        Rule(
+            id: "electron.dawn-graphite-cache", displayName: "Per-App Dawn Graphite Cache",
+            ecosystem: .node, scope: .perAppCache,
+            matcher: .libraryAppSupportPerApp(subdir: "DawnGraphiteCache"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Per-app DawnGraphiteCache/ — Chromium 115+ Apple Graphite pipeline cache.",
+            iconAsset: "electron",
+            brandTint: Color(red: 0x47/255, green: 0x84/255, blue: 0x8F/255),
+            languageKey: "javascript",
+            toolKey: "electron",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/<app>/DawnGraphiteCache/` caches compiled pipelines for Dawn — Chromium's WebGPU implementation — running on Apple's Graphite (Skia GPU) backend. Added in Chromium 115; visible in apps shipping recent Electron versions.",
+                safetyNote: "Recompiled on demand on the next launch — perf hit only.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Dawn — Chromium WebGPU", url: "https://dawn.googlesource.com/dawn", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "electron.dawn-webgpu-cache", displayName: "Per-App Dawn WebGPU Cache",
+            ecosystem: .node, scope: .perAppCache,
+            matcher: .libraryAppSupportPerApp(subdir: "DawnWebGPUCache"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Per-app DawnWebGPUCache/ — Chromium 113+ WebGPU pipeline cache.",
+            iconAsset: "electron",
+            brandTint: Color(red: 0x47/255, green: 0x84/255, blue: 0x8F/255),
+            languageKey: "javascript",
+            toolKey: "electron",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/<app>/DawnWebGPUCache/` caches compiled pipelines for Dawn-backed WebGPU usage in Electron apps. Added in Chromium 113; populated by apps that use the WebGPU API (some AI inference UIs and 3D viewers).",
+                safetyNote: "Recompiled on demand on the next launch.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "WebGPU — MDN", url: "https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "electron.service-worker-cache", displayName: "Per-App Service Worker Cache",
+            ecosystem: .node, scope: .perAppCache,
+            matcher: .libraryAppSupportPerApp(subdir: "Service Worker/CacheStorage"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Per-app Service Worker CacheStorage — PWA-style offline asset cache.",
+            iconAsset: "electron",
+            brandTint: Color(red: 0x47/255, green: 0x84/255, blue: 0x8F/255),
+            languageKey: "javascript",
+            toolKey: "electron",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/<app>/Service Worker/CacheStorage/` is the on-disk store backing the web platform's `caches` API. Apps that aggressively pre-cache assets via a Service Worker (Notion, Linear, Outlook, many PWA-style hosts) can accumulate multi-GB here. Distinct from `IndexedDB/` and `Local Storage/`, which contain real user state and are NOT cleaned by this rule.",
+                safetyNote: "Re-fetched from origin on the next app launch. The companion `Service Worker/Database/` (registration metadata) is left untouched.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Cache API — MDN", url: "https://developer.mozilla.org/en-US/docs/Web/API/Cache", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "electron.crashpad", displayName: "Per-App Chromium Crash Dumps",
+            ecosystem: .node, scope: .perAppCache,
+            matcher: .libraryAppSupportPerApp(subdir: "Crashpad"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Per-app Crashpad/ — Chromium's crash-dump database.",
+            iconAsset: "electron",
+            brandTint: Color(red: 0x47/255, green: 0x84/255, blue: 0x8F/255),
+            languageKey: "javascript",
+            toolKey: "electron",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/<app>/Crashpad/` is Chromium's crash-dump database — `.dmp` minidumps from past crashes plus the bookkeeping needed to upload them. Useful only to the app's developers; safe to wipe locally.",
+                safetyNote: "Recreated on the next crash. Doesn't affect macOS-level crash reports under `~/Library/Logs/DiagnosticReports/` (which has its own rule).",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Crashpad — Chromium", url: "https://chromium.googlesource.com/crashpad/crashpad", kind: .docs),
+                ]
+            )
+        ),
+        // ── Sparkle update cache (per-app) ────────────────────────────────
+        Rule(
+            id: "sparkle.update-cache", displayName: "Per-App Sparkle Update Cache",
+            ecosystem: .apple, scope: .perAppCache,
+            matcher: .libraryCachesPerApp(subdir: "org.sparkle-project.Sparkle"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Sparkle update download / staging area.",
+            sfSymbol: "sparkles",
+            brandTint: Color(red: 0xFF/255, green: 0xB3/255, blue: 0x00/255),  // Sparkle amber
+            languageKey: "swift",
+            toolKey: "sparkle",
+            item: ItemInfo(
+                description: "`~/Library/Caches/<bundle-id>/org.sparkle-project.Sparkle/` is where the Sparkle auto-update framework stages downloaded `.zip`/`.dmg` archives, EdDSA signature blobs, and intermediate extraction work. Sparkle ships in a huge fraction of macOS indie apps (Cyberduck, Transmission, Postico, OBS Studio, OpenEmu, DaisyDisk, MacVim, BBEdit, …); the staging area persists after install and is never auto-cleaned.",
+                safetyNote: "Sparkle re-downloads the archive next time it actually has a new update to install. Doesn't affect the installed app.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Sparkle Project", url: "https://sparkle-project.org/", kind: .official),
+                    InfoLink(title: "Sparkle on GitHub", url: "https://github.com/sparkle-project/Sparkle", kind: .official),
                 ]
             )
         ),

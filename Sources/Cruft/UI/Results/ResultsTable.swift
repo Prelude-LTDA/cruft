@@ -67,11 +67,16 @@ private struct GroupedResults: View {
 private struct ProjectHeader: View {
     let group: ProjectGroup
 
+    /// Lazily resolved off the main thread — see `AppLookup.resolveAsync`.
+    /// We seed from the cache synchronously so warm hits paint without a
+    /// flash. nil only for project / global / system groups, and for
+    /// app-bundle groups whose first paint is still pending.
+    @State private var resolved: AppLookup.Resolved?
+
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: group.isGlobal ? "house.fill" : "folder.fill")
-                .foregroundStyle(group.isGlobal ? .blue : .secondary)
-            Text(group.displayName)
+            leadingMark
+            Text(headerTitle)
                 .font(.system(size: 13, weight: .semibold))
             Text("·")
                 .foregroundStyle(.tertiary)
@@ -85,6 +90,55 @@ private struct ProjectHeader: View {
                 .monospacedDigit()
         }
         .padding(.vertical, 2)
+        .help(group.isAppBundle ? group.path : group.displayName)
+        .task(id: group.id) {
+            // Skip non-bundle groups (no work to do) and warm cache hits
+            // (already painted from `cachedResolved` below).
+            guard let segment = group.bundleSegment else { return }
+            if resolved != nil { return }
+            if let cached = AppLookup.cachedResolved(for: segment) {
+                resolved = cached
+                return
+            }
+            resolved = await AppLookup.resolveAsync(segment: segment)
+        }
+        .onAppear {
+            // Synchronous cache seed — avoids a one-frame placeholder for
+            // bundles that have already been resolved by an earlier scan.
+            if let segment = group.bundleSegment, resolved == nil {
+                resolved = AppLookup.cachedResolved(for: segment)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var leadingMark: some View {
+        if let icon = resolved?.icon {
+            Image(nsImage: icon)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 18, height: 18)
+        } else if group.isAppBundle {
+            // App segment — either we couldn't resolve it or we're still
+            // loading. Generic app-bundle glyph reads as "an app" without
+            // committing to wrong branding. Fades to the real icon when
+            // the async resolve lands.
+            Image(systemName: "app.dashed")
+                .foregroundStyle(.secondary)
+                .frame(width: 18, height: 18)
+        } else if group.isSystem {
+            // Mirrors the sidebar's System source row — root-owned paths
+            // outside $HOME (Homebrew under /opt, /nix, /Library/Developer, …).
+            Image(systemName: "externaldrive.fill")
+                .foregroundStyle(.secondary)
+        } else {
+            Image(systemName: group.isGlobal ? "house.fill" : "folder.fill")
+                .foregroundStyle(group.isGlobal ? .blue : .secondary)
+        }
+    }
+
+    private var headerTitle: String {
+        resolved?.metadata.displayName ?? group.displayName
     }
 }
 
