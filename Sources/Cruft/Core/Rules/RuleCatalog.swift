@@ -5018,6 +5018,8 @@ enum RuleCatalog {
                 regenCommand: nil,
                 links: [
                     InfoLink(title: "Electron — userData paths", url: "https://www.electronjs.org/docs/latest/api/app#appgetpathname", kind: .docs),
+                    InfoLink(title: "Chromium — disk cache design", url: "https://www.chromium.org/developers/design-documents/network-stack/disk-cache/", kind: .docs),
+                    InfoLink(title: "Chromium — user data directory", url: "https://chromium.googlesource.com/chromium/src/+/main/docs/user_data_dir.md", kind: .docs),
                 ]
             )
         ),
@@ -5036,7 +5038,9 @@ enum RuleCatalog {
                 safetyNote: "First launch after clearing is marginally slower while V8 recompiles the app's JS.",
                 regenCommand: nil,
                 links: [
-                    InfoLink(title: "V8 — code caching", url: "https://v8.dev/blog/improved-code-caching", kind: .docs),
+                    InfoLink(title: "V8 — improved code caching", url: "https://v8.dev/blog/improved-code-caching", kind: .docs),
+                    InfoLink(title: "V8 — code caching APIs for embedders", url: "https://v8.dev/blog/code-caching-for-devs", kind: .docs),
+                    InfoLink(title: "Chromium — embedded V8", url: "https://chromium.googlesource.com/v8/v8/", kind: .official),
                 ]
             )
         ),
@@ -5054,7 +5058,10 @@ enum RuleCatalog {
                 description: "`~/Library/Application Support/<app>/GPUCache/` is the Chromium-level GPU shader/driver cache used by Electron apps. Distinct from the underlying Metal AIR cache that the same app's renderer process also writes — different layer, both regenerable. Sibling caches `DawnGraphiteCache/` and `DawnWebGPUCache/` are catalogued separately.",
                 safetyNote: "Recompiled on demand by Chromium's GPU process on the next launch.",
                 regenCommand: nil,
-                links: []
+                links: [
+                    InfoLink(title: "Chromium — GPU process design", url: "https://www.chromium.org/developers/design-documents/gpu-accelerated-compositing-in-chrome/", kind: .docs),
+                    InfoLink(title: "Chromium — graphics design docs index", url: "https://chromium.googlesource.com/chromium/src/+/main/docs/README.md", kind: .docs),
+                ]
             )
         ),
         Rule(
@@ -5072,7 +5079,8 @@ enum RuleCatalog {
                 safetyNote: "Recompiled on demand on the next launch — perf hit only.",
                 regenCommand: nil,
                 links: [
-                    InfoLink(title: "Dawn — Chromium WebGPU", url: "https://dawn.googlesource.com/dawn", kind: .docs),
+                    InfoLink(title: "Dawn — Chromium WebGPU implementation", url: "https://dawn.googlesource.com/dawn", kind: .docs),
+                    InfoLink(title: "Skia Graphite — new GPU backend", url: "https://skia.org/docs/user/special/graphite/", kind: .docs),
                 ]
             )
         ),
@@ -5091,7 +5099,9 @@ enum RuleCatalog {
                 safetyNote: "Recompiled on demand on the next launch.",
                 regenCommand: nil,
                 links: [
-                    InfoLink(title: "WebGPU — MDN", url: "https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API", kind: .docs),
+                    InfoLink(title: "WebGPU API — MDN", url: "https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API", kind: .docs),
+                    InfoLink(title: "WebGPU — W3C specification", url: "https://www.w3.org/TR/webgpu/", kind: .docs),
+                    InfoLink(title: "Dawn — Chromium WebGPU implementation", url: "https://dawn.googlesource.com/dawn", kind: .docs),
                 ]
             )
         ),
@@ -5111,6 +5121,9 @@ enum RuleCatalog {
                 regenCommand: nil,
                 links: [
                     InfoLink(title: "Cache API — MDN", url: "https://developer.mozilla.org/en-US/docs/Web/API/Cache", kind: .docs),
+                    InfoLink(title: "Service Worker API — MDN", url: "https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API", kind: .docs),
+                    InfoLink(title: "Service Worker — W3C specification", url: "https://www.w3.org/TR/service-workers/", kind: .docs),
+                    InfoLink(title: "Offline storage strategies — web.dev", url: "https://web.dev/articles/storage-for-the-web", kind: .blog),
                 ]
             )
         ),
@@ -5129,7 +5142,9 @@ enum RuleCatalog {
                 safetyNote: "Recreated on the next crash. Doesn't affect macOS-level crash reports under `~/Library/Logs/DiagnosticReports/` (which has its own rule).",
                 regenCommand: nil,
                 links: [
-                    InfoLink(title: "Crashpad — Chromium", url: "https://chromium.googlesource.com/crashpad/crashpad", kind: .docs),
+                    InfoLink(title: "Crashpad — repository", url: "https://chromium.googlesource.com/crashpad/crashpad", kind: .official),
+                    InfoLink(title: "Crashpad — overview", url: "https://chromium.googlesource.com/crashpad/crashpad/+/main/doc/overview_design.md", kind: .docs),
+                    InfoLink(title: "Chromium — embedder reporting", url: "https://chromium.googlesource.com/chromium/src/+/main/components/crash/", kind: .docs),
                 ]
             )
         ),
