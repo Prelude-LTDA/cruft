@@ -200,7 +200,11 @@ private struct FlatResults: View {
         // Apply user-chosen `sortOrder` on top of the model's filtered list.
         // Model returns size-desc by default; our default `sortOrder` matches,
         // so first render is unchanged. Clicking a column header re-sorts.
-        model.filteredFindings.sorted(using: sortOrder)
+        //
+        // `id` appended as a stable tie-breaker — `sorted(using:)` is not
+        // stable, so otherwise items with equal sort keys (size, modified
+        // date, etc.) shuffle on every re-render.
+        model.filteredFindings.sorted(using: sortOrder + [KeyPathComparator(\.id)])
     }
 
     private func displayPath(_ f: Finding) -> String {

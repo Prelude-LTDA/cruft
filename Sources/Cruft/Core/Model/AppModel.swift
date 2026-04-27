@@ -270,7 +270,16 @@ final class AppModel {
                 return false
             }
             return true
-        }.sorted { ($0.size ?? 0) > ($1.size ?? 0) }
+        }.sorted { a, b in
+            // Stable secondary key on `id` — Swift's `sorted` is not
+            // stable, so without a tie-breaker, items of equal size
+            // shuffle on every re-sort (visible during scan as rows
+            // reorder under the cursor).
+            let sa = a.size ?? 0
+            let sb = b.size ?? 0
+            if sa != sb { return sa > sb }
+            return a.id < b.id
+        }
     }
 
     /// True if the source (scan root, Spotlight, or global caches) that
@@ -337,7 +346,13 @@ final class AppModel {
                 enriched.lastCleanedAt = cleanedIndex[finding.presentationPath]
                 pending.append(enriched)
                 let now = ContinuousClock.now
-                if pending.count >= 25 || now - lastFlush > .milliseconds(120) {
+                // ~1 Hz cadence (or sooner if a burst hits 250 items).
+                // Faster updates make the list visibly jitter and force
+                // SwiftUI to re-evaluate the menu bar mid-render — the
+                // Window menu and View > Full Screen items glitch when
+                // observed properties (`findings.isEmpty`, etc.) change
+                // while a menu is open.
+                if pending.count >= 250 || now - lastFlush > .milliseconds(1000) {
                     let batch = pending; pending.removeAll(keepingCapacity: true)
                     lastFlush = now
                     await MainActor.run { self.ingest(batch) }
