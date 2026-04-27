@@ -30,6 +30,7 @@ enum RuleCatalog {
         out.append(contentsOf: bazel)
         out.append(contentsOf: packageManagers)
         out.append(contentsOf: devops)
+        out.append(contentsOf: gameDev)
         return out
     }()
 
@@ -4773,6 +4774,166 @@ enum RuleCatalog {
                 regenCommand: nil,
                 links: [
                     InfoLink(title: "nektos/act — GitHub", url: "https://github.com/nektos/act", kind: .official),
+                ]
+            )
+        ),
+    ]
+
+    // MARK: - Game Dev (Unity / Unreal / Godot + Metal shader caches)
+
+    private static let unityBlack    = Color(red: 0x18/255, green: 0x18/255, blue: 0x18/255)
+    private static let unrealBlack   = Color(red: 0x10/255, green: 0x10/255, blue: 0x10/255)
+    private static let godotBlue     = Color(red: 0x47/255, green: 0x8C/255, blue: 0xBF/255)
+    private static let metalSilver   = Color(red: 0x8E/255, green: 0x8E/255, blue: 0x93/255)
+
+    private static let gameDev: [Rule] = [
+        // ── Unity ────────────────────────────────────────────────────────────
+        Rule(
+            id: "unity.cache", displayName: "Unity Package Cache",
+            ecosystem: .gameDev, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Unity/cache"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "Unity's per-user package cache.",
+            iconAsset: "unity",
+            brandTint: unityBlack,
+            toolKey: "unity",
+            item: ItemInfo(
+                description: "`~/Library/Unity/cache/` holds packages downloaded by Unity's Package Manager (UPM) for use across projects, alongside other per-user Unity working data.",
+                safetyNote: "Unity re-downloads packages from the registry on the next project open.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Unity Package Manager", url: "https://docs.unity3d.com/Manual/Packages.html", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "unity.asset-store", displayName: "Unity Asset Store Downloads",
+            ecosystem: .gameDev, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Unity/Asset Store-5.x"),
+            action: .trash, tier: .high, aggregation: .none,
+            notes: "Downloaded Asset Store packages — re-downloadable from your Asset Store library.",
+            iconAsset: "unity",
+            brandTint: unityBlack,
+            toolKey: "unity",
+            item: ItemInfo(
+                description: "`~/Library/Unity/Asset Store-5.x/` is where the Unity Editor caches `.unitypackage` archives downloaded from the Asset Store. Heavy users — especially those with paid asset libraries — see this reach tens of GB.",
+                safetyNote: "Re-downloadable from your Asset Store library (purchased entitlements persist on Unity's side). Free assets only stay re-downloadable while their listings remain on the store — verify before clearing if you depend on a publisher who may have delisted.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Unity Asset Store", url: "https://assetstore.unity.com/", kind: .official),
+                ]
+            )
+        ),
+        Rule(
+            id: "unity-hub.editor-cache", displayName: "Unity Hub Installer Cache",
+            ecosystem: .gameDev, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Application Support/UnityHub/cache"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Unity Hub's editor-installer staging area.",
+            iconAsset: "unity",
+            brandTint: unityBlack,
+            toolKey: "unity",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/UnityHub/cache/` is the staging area Unity Hub uses while downloading and installing editor versions and modules.",
+                safetyNote: "Cleared safely between installs. Hub re-stages on the next download.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Unity Hub", url: "https://unity.com/unity-hub", kind: .official),
+                ]
+            )
+        ),
+        // ── Unreal Engine ───────────────────────────────────────────────────
+        Rule(
+            id: "unreal.derived-data", displayName: "Unreal DerivedDataCache",
+            ecosystem: .gameDev, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Application Support/Epic/UnrealEngine/Common/DerivedDataCache"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "Engine-wide DDC: cooked assets + compiled shaders.",
+            iconAsset: "unrealengine",
+            brandTint: unrealBlack,
+            toolKey: "unreal",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/Epic/UnrealEngine/Common/DerivedDataCache/` is Unreal's engine-wide DDC — derived versions of source assets (cooked textures, light maps, etc.) and compiled shaders, shared across projects on this machine. Easily reaches 5–50 GB on active users; per-project DDC may also live alongside the project's `.uproject`.",
+                safetyNote: "Unreal rebuilds DDC entries on demand the next time you open a project or trigger a cook. The first build after clearing is slow (minutes per project) but everything is reproducible from sources.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Unreal — Derived Data Cache", url: "https://dev.epicgames.com/documentation/en-us/unreal-engine/derived-data-cache", kind: .docs),
+                ]
+            )
+        ),
+        // ── Godot ───────────────────────────────────────────────────────────
+        Rule(
+            id: "godot.editor-cache", displayName: "Godot Editor Cache",
+            ecosystem: .gameDev, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/Godot"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Godot editor's user-level cache (project metadata, thumbnails).",
+            iconAsset: "godot",
+            brandTint: godotBlue,
+            toolKey: "godot",
+            item: ItemInfo(
+                description: "`~/Library/Caches/Godot/` is Godot's user-level editor cache — recent-projects metadata, thumbnails, and other transient data the editor regenerates on demand. Godot's per-project shader and import caches live in each project's `.godot/` directory, separate from this.",
+                safetyNote: "Recreated on the next editor launch.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Godot — file paths in Godot projects", url: "https://docs.godotengine.org/en/stable/tutorials/io/data_paths.html", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "godot.shader-cache", displayName: "Godot Editor Shader Cache",
+            ecosystem: .gameDev, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Application Support/Godot/shader_cache"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Godot editor-side compiled shader cache.",
+            iconAsset: "godot",
+            brandTint: godotBlue,
+            toolKey: "godot",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/Godot/shader_cache/` holds the editor's compiled shader binaries (used by previews and the editor's own rendering). Per-project runtime shader caches live in each project's `.godot/shader_cache/` directory and aren't touched by this rule.",
+                safetyNote: "Recompiled on demand by the editor.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Godot — file paths", url: "https://docs.godotengine.org/en/stable/tutorials/io/data_paths.html", kind: .docs),
+                ]
+            )
+        ),
+        // ── Metal shader binary cache (catches non-bundled binaries) ──────
+        Rule(
+            id: "metal.global-cache", displayName: "Metal Shader Cache",
+            ecosystem: .gameDev, scope: .globalCache,
+            matcher: .darwinCachePath(relativePath: "com.apple.metal"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "macOS Metal AIR cache — catches non-bundled binaries (cargo / swift run / scripts).",
+            sfSymbol: "cpu.fill",
+            brandTint: metalSilver,
+            languageKey: "swift",
+            toolKey: "metal",
+            item: ItemInfo(
+                description: "`$DARWIN_USER_CACHE_DIR/com.apple.metal/` (resolves to `/private/var/folders/<X>/<Y>/C/com.apple.metal/`) is the catch-all Metal binary shader cache for processes that don't have a bundle ID — `cargo run` builds, `swift run` executables, ad-hoc Python scripts hitting Metal via PyTorch / MLX, and similar non-bundled binaries. Bundled apps get their own `<bundle-id>/com.apple.metal/` peer subdirectories that aren't enumerated here yet.",
+                safetyNote: "macOS rebuilds the cache on the next render; only a perf hit while it warms back up. Doesn't affect WGPU's own pipeline cache (which apps store at developer-defined locations) or MoltenVK's per-app pipeline blob.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Metal — Apple Developer", url: "https://developer.apple.com/metal/", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "metal.global-mtlfe", displayName: "MetalFX Shader Cache",
+            ecosystem: .gameDev, scope: .globalCache,
+            matcher: .darwinCachePath(relativePath: "com.apple.metalfe"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "MetalFX (upscaling / temporal AA) shader cache.",
+            sfSymbol: "rectangle.expand.vertical",
+            brandTint: metalSilver,
+            languageKey: "swift",
+            toolKey: "metal",
+            item: ItemInfo(
+                description: "`$DARWIN_USER_CACHE_DIR/com.apple.metalfe/` caches compiled shaders for MetalFX (Apple's spatial / temporal upscaling framework used by some games and rendering apps). Same per-user-session cache root as `com.apple.metal/`.",
+                safetyNote: "Recompiled on demand by MetalFX's first invocation in each affected app.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "MetalFX — Apple Developer", url: "https://developer.apple.com/documentation/metalfx", kind: .docs),
                 ]
             )
         ),

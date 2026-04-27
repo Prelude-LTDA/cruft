@@ -39,6 +39,13 @@ enum Matcher: Sendable, Hashable {
     /// individual items are sizable and deletable.
     case fixedAbsolutePathChildren(String)
 
+    /// Path inside `$DARWIN_USER_CACHE_DIR` (the dynamic per-user cache
+    /// at `/private/var/folders/<X>/<Y>/C/`). Resolves the prefix at probe
+    /// time via `confstr(_CS_DARWIN_USER_CACHE_DIR)`. Used for top-level
+    /// shader caches (e.g. `com.apple.metal/`) that catch non-bundled
+    /// binaries — `cargo run`, `swift run`, ad-hoc Python scripts.
+    case darwinCachePath(relativePath: String)
+
     /// Glob pattern (gitignore-style) used sparingly — currently for `.egg-info`.
     case glob(pattern: String)
 

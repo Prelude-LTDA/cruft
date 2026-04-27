@@ -1,10 +1,30 @@
 import Foundation
+import Darwin
 
 /// Directly probes the ~30 global cache paths in the rule catalog. These are
 /// invisible to Spotlight (they live under `~/Library`, which is excluded) and
 /// their existence is deterministic — just stat them.
 struct FixedPathProbe: Sendable {
     let rules: [Rule]
+
+    /// `$DARWIN_USER_CACHE_DIR` — the per-user-session cache root at
+    /// `/private/var/folders/<X>/<Y>/C/`. Resolved once via libc's
+    /// `confstr(_CS_DARWIN_USER_CACHE_DIR)`. Always ends with a trailing `/`.
+    private static let darwinUserCacheDir: String? = {
+        let key = Int32(_CS_DARWIN_USER_CACHE_DIR)
+        let len = confstr(key, nil, 0)
+        guard len > 0 else { return nil }
+        var buf = [UInt8](repeating: 0, count: len)
+        let written = buf.withUnsafeMutableBytes {
+            confstr(key, $0.baseAddress?.assumingMemoryBound(to: CChar.self), len)
+        }
+        guard written > 0 else { return nil }
+        // confstr writes a NUL-terminated string; trim it before decoding.
+        if let nul = buf.firstIndex(of: 0) {
+            return String(decoding: buf[..<nul], as: UTF8.self)
+        }
+        return String(decoding: buf, as: UTF8.self)
+    }()
 
     func probe() -> [(rule: Rule, url: URL)] {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
@@ -66,6 +86,16 @@ struct FixedPathProbe: Sendable {
                        isDir.boolValue {
                         out.append((r, URL(fileURLWithPath: childPath)))
                     }
+                }
+
+            case let .darwinCachePath(rel):
+                guard let base = Self.darwinUserCacheDir else { continue }
+                // confstr's value already ends in `/`; strip a leading `/`
+                // from `rel` if the rule author included one.
+                let trimmed = rel.hasPrefix("/") ? String(rel.dropFirst()) : rel
+                let full = "\(base)\(trimmed)"
+                if FileManager.default.fileExists(atPath: full) {
+                    out.append((r, URL(fileURLWithPath: full)))
                 }
 
             default:

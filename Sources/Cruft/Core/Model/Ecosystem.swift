@@ -23,6 +23,8 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
     case vm                 // Docker / OrbStack / Tart / Lima / Vagrant / VirtualBox / ...
     case devops             // Cloud + IaC + k8s CLIs — Pulumi / Terraform / Helm /
                             // kubectl / gcloud / gh / act / …
+    case gameDev            // Game engines + GPU shader caches — Unity / Unreal /
+                            // Godot + the global Metal AIR cache
 
     var id: String { rawValue }
 
@@ -51,6 +53,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .browserAutomation: "Browser Automation"
         case .vm: "VMs & Containers"
         case .devops: "DevOps & Cloud CLIs"
+        case .gameDev: "Game Dev & Shaders"
         }
     }
 
@@ -80,6 +83,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .browserAutomation: Color(red: 0x14/255, green: 0xB8/255, blue: 0xA6/255)  // teal-500
         case .vm: Color(red: 0x24/255, green: 0x96/255, blue: 0xED/255)
         case .devops: Color(red: 0x06/255, green: 0xB6/255, blue: 0xD4/255)  // cyan-500
+        case .gameDev: Color(red: 0x8B/255, green: 0x5C/255, blue: 0xF6/255)  // violet-500
         }
     }
 
@@ -109,6 +113,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .browserAutomation: "cursorarrow.click.2"
         case .vm: "cube.box.fill"
         case .devops: "cloud.fill"
+        case .gameDev: "gamecontroller.fill"
         }
     }
 
@@ -138,6 +143,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .browserAutomation: ""
         case .vm: "docker"
         case .devops: ""                    // per-rule override
+        case .gameDev: ""                   // per-rule override (unity / unrealengine / godot)
         }
     }
 }

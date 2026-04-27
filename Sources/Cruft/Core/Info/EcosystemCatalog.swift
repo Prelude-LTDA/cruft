@@ -105,5 +105,18 @@ enum EcosystemCatalog {
                 InfoLink(title: "Kubernetes — kubectl", url: "https://kubernetes.io/docs/reference/kubectl/", kind: .docs),
             ]
         ),
+        EcosystemInfo(
+            ecosystem: .gameDev,
+            displayName: "Game Dev & Shaders",
+            tagline: "Game engines and GPU shader caches — large derived data that's reproducible from project sources but slow to rebuild.",
+            description: "Engines like Unity, Unreal, and Godot generate cooked assets, derived-data caches, and per-platform shader binaries that can easily reach tens of gigabytes for a single project. On macOS, the Metal framework also keeps its own AIR/IR shader cache at a per-user OS-level path that catches non-bundled binaries (a `cargo run` or `swift run` of a wgpu app, ad-hoc Python scripts hitting Metal). Per-app variants of those shader caches live inside each app's bundle cache directory and aren't enumerated globally yet.",
+            links: [
+                InfoLink(title: "Game engine — Wikipedia", url: "https://en.wikipedia.org/wiki/Game_engine", kind: .wiki),
+                InfoLink(title: "Unity", url: "https://unity.com/", kind: .official),
+                InfoLink(title: "Unreal Engine", url: "https://www.unrealengine.com/", kind: .official),
+                InfoLink(title: "Godot Engine", url: "https://godotengine.org/", kind: .official),
+                InfoLink(title: "Metal — Apple Developer", url: "https://developer.apple.com/metal/", kind: .docs),
+            ]
+        ),
     ]
 }

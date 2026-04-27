@@ -26,7 +26,8 @@ struct MatcherIndex: Sendable {
                 aggByName[dirName, default: []].append(r)
                 markers.formUnion(required)
             case .fixedPath, .fixedPathChildren, .fixedPathGrandchildren,
-                 .fixedAbsolutePath, .fixedAbsolutePathChildren, .glob:
+                 .fixedAbsolutePath, .fixedAbsolutePathChildren,
+                 .darwinCachePath, .glob:
                 break // not walker-matched
             }
         }
@@ -65,7 +66,8 @@ extension Rule {
             return required.contains(where: siblings.contains)
 
         case .fixedPath, .fixedPathChildren, .fixedPathGrandchildren,
-             .fixedAbsolutePath, .fixedAbsolutePathChildren, .glob:
+             .fixedAbsolutePath, .fixedAbsolutePathChildren,
+             .darwinCachePath, .glob:
             return false
         }
     }
