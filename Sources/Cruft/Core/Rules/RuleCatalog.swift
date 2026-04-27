@@ -29,6 +29,7 @@ enum RuleCatalog {
         out.append(contentsOf: ide)
         out.append(contentsOf: bazel)
         out.append(contentsOf: packageManagers)
+        out.append(contentsOf: devops)
         return out
     }()
 
@@ -4196,6 +4197,161 @@ enum RuleCatalog {
                 regenCommand: nil,
                 links: [
                     InfoLink(title: "SourceKit-LSP — GitHub", url: "https://github.com/swiftlang/sourcekit-lsp", kind: .official),
+                ]
+            )
+        ),
+    ]
+
+    // MARK: - DevOps & Cloud CLIs
+
+    private static let pulumiPurple    = Color(red: 0x80/255, green: 0x59/255, blue: 0xC2/255)
+    private static let terraformPurple = Color(red: 0x82/255, green: 0x4A/255, blue: 0xC4/255)
+    private static let helmBlue        = Color(red: 0x27/255, green: 0x7A/255, blue: 0x9F/255)
+    private static let kubernetesBlue  = Color(red: 0x32/255, green: 0x6C/255, blue: 0xE5/255)
+    private static let gcloudBlue      = Color(red: 0x42/255, green: 0x85/255, blue: 0xF4/255)
+    private static let githubBlack     = Color(red: 0x18/255, green: 0x17/255, blue: 0x17/255)
+    private static let actBlue         = Color(red: 0x2C/255, green: 0x70/255, blue: 0xC1/255)
+
+    private static let devops: [Rule] = [
+        Rule(
+            id: "pulumi.plugins", displayName: "Pulumi Plugins",
+            ecosystem: .devops, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".pulumi/plugins"),
+            action: .trash, tier: .high, aggregation: .none,
+            notes: "Resource-provider plugin binaries.",
+            iconAsset: "pulumi",
+            brandTint: pulumiPurple,
+            toolKey: "pulumi",
+            item: ItemInfo(
+                description: "`~/.pulumi/plugins` holds Pulumi's downloaded resource-provider plugins, one directory per provider+version. Provider plugins are individually large (single AWS/Azure/GCP plugins are hundreds of MB) and Pulumi keeps every version it has ever installed.",
+                safetyNote: "Pulumi re-downloads needed plugins on the next `pulumi up` (or via `pulumi plugin install`). The companion `~/.pulumi/templates/` holds project templates and refills via `pulumi new`.",
+                regenCommand: "pulumi plugin install",
+                links: [
+                    InfoLink(title: "Pulumi — pulumi plugin", url: "https://www.pulumi.com/docs/cli/commands/pulumi_plugin/", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "terraform.plugin-cache", displayName: "Terraform Plugin Cache",
+            ecosystem: .devops, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".terraform.d/plugin-cache"),
+            action: .trash, tier: .high, aggregation: .none,
+            notes: "Provider plugin binaries shared across Terraform projects.",
+            iconAsset: "terraform",
+            brandTint: terraformPurple,
+            toolKey: "terraform",
+            item: ItemInfo(
+                description: "`~/.terraform.d/plugin-cache` is the shared provider-plugin cache that Terraform projects pull from instead of each downloading their own copy. Only populated when `plugin_cache_dir` is set in `~/.terraformrc`. The AWS provider alone is ~600 MB unzipped.",
+                safetyNote: "`terraform init` re-downloads any provider versions referenced by your projects.",
+                regenCommand: "terraform init",
+                links: [
+                    InfoLink(title: "Terraform — provider plugin cache", url: "https://developer.hashicorp.com/terraform/cli/config/config-file#provider-plugin-cache", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "helm.repo-cache", displayName: "Helm Repository Cache",
+            ecosystem: .devops, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/helm/repository"),
+            action: .trash, tier: .medium, aggregation: .none,
+            notes: "Cached chart .tgz archives + repo index.yaml files.",
+            iconAsset: "helm",
+            brandTint: helmBlue,
+            toolKey: "helm",
+            item: ItemInfo(
+                description: "`~/Library/Caches/helm/repository` holds downloaded chart archives (`.tgz`) and `<repo>-index.yaml` metadata for every Helm repository the user has added. Refetched by `helm repo update` and on chart pulls.",
+                safetyNote: "`helm repo update` refreshes the index files; charts are re-downloaded on `helm pull`/`helm install` as needed.",
+                regenCommand: "helm repo update",
+                links: [
+                    InfoLink(title: "Helm — XDG paths", url: "https://helm.sh/docs/helm/helm/", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "kubectl.discovery-cache", displayName: "kubectl Discovery Cache",
+            ecosystem: .devops, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".kube/cache/discovery"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Per-cluster API discovery documents.",
+            iconAsset: "kubernetes",
+            brandTint: kubernetesBlue,
+            toolKey: "kubectl",
+            item: ItemInfo(
+                description: "`~/.kube/cache/discovery/` caches API-discovery documents (`servergroups.json`, `serverresources.json`) per cluster API endpoint. Default TTL is 10 minutes; one tree per server kubectl has talked to.",
+                safetyNote: "Refilled automatically on the next `kubectl` call.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "kubectl options — --cache-dir", url: "https://kubernetes.io/docs/reference/kubectl/", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "kubectl.http-cache", displayName: "kubectl HTTP Cache",
+            ecosystem: .devops, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".kube/cache/http"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "ETag-keyed HTTP response cache for discovery requests.",
+            iconAsset: "kubernetes",
+            brandTint: kubernetesBlue,
+            toolKey: "kubectl",
+            item: ItemInfo(
+                description: "`~/.kube/cache/http/` is kubectl's HTTP response cache, keyed by ETag. Used to short-circuit unchanged discovery responses.",
+                safetyNote: "Refilled automatically on the next `kubectl` call.",
+                regenCommand: nil,
+                links: []
+            )
+        ),
+        Rule(
+            id: "gcloud.logs", displayName: "gcloud CLI Logs",
+            ecosystem: .devops, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".config/gcloud/logs"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Per-invocation gcloud CLI logs.",
+            iconAsset: "google-cloud",
+            brandTint: gcloudBlue,
+            toolKey: "gcloud",
+            item: ItemInfo(
+                description: "`~/.config/gcloud/logs/` collects per-invocation gcloud CLI logs in dated subdirectories (`YYYY.MM.DD/HH.MM.SS.NNNNNN.log`). Accumulates indefinitely without rotation.",
+                safetyNote: "Written fresh on every `gcloud` call. Logs are diagnostic-only.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Google Cloud SDK — configurations", url: "https://cloud.google.com/sdk/docs/configurations", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "gh.cli-cache", displayName: "GitHub CLI Cache",
+            ecosystem: .devops, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/com.github.gh"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "HTTP response cache for `gh api` / `gh pr` / `gh repo` calls.",
+            iconAsset: "github",
+            brandTint: githubBlack,
+            toolKey: "gh",
+            item: ItemInfo(
+                description: "`~/Library/Caches/com.github.gh` is the GitHub CLI's HTTP cache layer for `gh api`/`gh pr`/`gh repo` calls. Some commands use the cache implicitly; others opt in via `--cache`.",
+                safetyNote: "Refilled automatically on the next `gh` call.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "GitHub CLI", url: "https://cli.github.com/", kind: .official),
+                ]
+            )
+        ),
+        Rule(
+            id: "act.cache", displayName: "act Cache",
+            ecosystem: .devops, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".cache/act"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Local GitHub Actions runner cache (nektos/act).",
+            iconAsset: "act",
+            brandTint: actBlue,
+            toolKey: "act",
+            item: ItemInfo(
+                description: "`~/.cache/act/` holds nektos/act's cached runner images, action source checkouts, and artifact-server payloads from running GitHub Actions locally.",
+                safetyNote: "act re-pulls runner images and re-fetches actions on the next invocation.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "nektos/act — GitHub", url: "https://github.com/nektos/act", kind: .official),
                 ]
             )
         ),

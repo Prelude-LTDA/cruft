@@ -21,6 +21,8 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
     case aiCodingAgent      // Claude Code / Codex CLI / Aider / Continue / Cline / etc.
     case browserAutomation  // Playwright / Cypress / Puppeteer — bundled browser binaries
     case vm                 // Docker / OrbStack / Tart / Lima / Vagrant / VirtualBox / ...
+    case devops             // Cloud + IaC + k8s CLIs — Pulumi / Terraform / Helm /
+                            // kubectl / gcloud / gh / act / …
 
     var id: String { rawValue }
 
@@ -48,6 +50,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .aiCodingAgent: "AI Coding Agents"
         case .browserAutomation: "Browser Automation"
         case .vm: "VMs & Containers"
+        case .devops: "DevOps & Cloud CLIs"
         }
     }
 
@@ -76,6 +79,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .aiCodingAgent: Color(red: 0xF4/255, green: 0x3F/255, blue: 0x5E/255)  // rose-500
         case .browserAutomation: Color(red: 0x14/255, green: 0xB8/255, blue: 0xA6/255)  // teal-500
         case .vm: Color(red: 0x24/255, green: 0x96/255, blue: 0xED/255)
+        case .devops: Color(red: 0x06/255, green: 0xB6/255, blue: 0xD4/255)  // cyan-500
         }
     }
 
@@ -104,6 +108,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .aiCodingAgent: "bubble.and.pencil"
         case .browserAutomation: "cursorarrow.click.2"
         case .vm: "cube.box.fill"
+        case .devops: "cloud.fill"
         }
     }
 
@@ -132,6 +137,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .aiCodingAgent: ""
         case .browserAutomation: ""
         case .vm: "docker"
+        case .devops: ""                    // per-rule override
         }
     }
 }

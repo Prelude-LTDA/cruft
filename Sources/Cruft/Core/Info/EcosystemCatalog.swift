@@ -94,5 +94,16 @@ enum EcosystemCatalog {
                 InfoLink(title: "OrbStack", url: "https://orbstack.dev/", kind: .official),
             ]
         ),
+        EcosystemInfo(
+            ecosystem: .devops,
+            displayName: "DevOps & Cloud CLIs",
+            tagline: "Command-line tools for cloud infrastructure, Kubernetes, and CI workflows that cache plugin binaries and remote responses on disk.",
+            description: "Modern infrastructure work runs through CLIs that all share a common pattern: download plugins or provider binaries on first use, cache HTTP responses to avoid round-tripping the same API calls, and write per-invocation logs that nobody ever reads. Pulumi providers, Terraform plugins, and Helm chart archives are particularly hefty — single-digit gigabytes per tool is normal. The caches refill themselves on the next command, so reclaiming the space costs only a one-shot re-download.",
+            links: [
+                InfoLink(title: "Infrastructure as code — Wikipedia", url: "https://en.wikipedia.org/wiki/Infrastructure_as_code", kind: .wiki),
+                InfoLink(title: "Terraform", url: "https://www.terraform.io/", kind: .official),
+                InfoLink(title: "Kubernetes — kubectl", url: "https://kubernetes.io/docs/reference/kubectl/", kind: .docs),
+            ]
+        ),
     ]
 }
