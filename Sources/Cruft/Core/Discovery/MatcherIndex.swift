@@ -27,7 +27,7 @@ struct MatcherIndex: Sendable {
                 markers.formUnion(required)
             case .fixedPath, .fixedPathChildren, .fixedPathGrandchildren,
                  .fixedAbsolutePath, .fixedAbsolutePathChildren,
-                 .darwinCachePath, .glob:
+                 .darwinCachePath, .darwinCachePerApp, .glob:
                 break // not walker-matched
             }
         }
@@ -67,7 +67,7 @@ extension Rule {
 
         case .fixedPath, .fixedPathChildren, .fixedPathGrandchildren,
              .fixedAbsolutePath, .fixedAbsolutePathChildren,
-             .darwinCachePath, .glob:
+             .darwinCachePath, .darwinCachePerApp, .glob:
             return false
         }
     }

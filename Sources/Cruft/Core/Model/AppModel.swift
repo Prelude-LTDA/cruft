@@ -103,6 +103,14 @@ final class AppModel {
             UserDefaults.standard.set(systemCachesEnabled, forKey: Self.systemCachesKey)
         }
     }
+    /// Per-app Darwin-cache subdirs (one finding per bundle's
+    /// `com.apple.metal/` etc.). Off by default — these are usually a
+    /// long tail of sub-MB caches that would dominate the default scan.
+    var perAppCachesEnabled: Bool = AppModel.loadPerAppCachesEnabled() {
+        didSet {
+            UserDefaults.standard.set(perAppCachesEnabled, forKey: Self.perAppCachesKey)
+        }
+    }
     var infoPanelVisible: Bool = AppModel.loadInfoPanelVisible() {
         didSet {
             UserDefaults.standard.set(infoPanelVisible, forKey: Self.infoPanelKey)
@@ -147,6 +155,7 @@ final class AppModel {
     private static let spotlightKey = "regen.spotlightEnabled.v1"
     private static let globalCachesKey = "regen.globalCachesEnabled.v1"
     private static let systemCachesKey = "regen.systemCachesEnabled.v1"
+    private static let perAppCachesKey = "regen.perAppCachesEnabled.v1"
     private static let infoPanelKey = "regen.infoPanelVisible.v1"
     private static let sidebarKey = "regen.sidebarVisible.v1"
     private static let ecosystemOrderKey = "regen.ecosystemOrder.v1"
@@ -175,6 +184,14 @@ final class AppModel {
     private static func loadSystemCachesEnabled() -> Bool {
         guard UserDefaults.standard.object(forKey: systemCachesKey) != nil else { return true }
         return UserDefaults.standard.bool(forKey: systemCachesKey)
+    }
+
+    private static func loadPerAppCachesEnabled() -> Bool {
+        // Default off — per-app shader caches are noisy (250+ rows on a
+        // typical machine) and the long tail is sub-MB. Users opt in via
+        // the sidebar when they want to clean those up.
+        guard UserDefaults.standard.object(forKey: perAppCachesKey) != nil else { return false }
+        return UserDefaults.standard.bool(forKey: perAppCachesKey)
     }
 
     /// Load the persisted ecosystem order, merging in any ecosystem cases
@@ -286,6 +303,12 @@ final class AppModel {
     /// produced this finding is currently enabled in the sidebar.
     private func sourceIsEnabled(_ f: Finding) -> Bool {
         if f.fromSpotlight { return spotlightEnabled }
+        // Per-app Darwin-cache rules (one finding per bundle's
+        // `com.apple.metal/` etc.) are gated by their own toggle so the
+        // long tail doesn't dominate the default scan.
+        if RuleCatalog.rule(id: f.ruleId)?.scope == .perAppCache {
+            return perAppCachesEnabled
+        }
         guard let project = f.projectPath else {
             // Global cache — split by user-home vs system-owned.
             let home = FileManager.default.homeDirectoryForCurrentUser.path

@@ -46,6 +46,14 @@ enum Matcher: Sendable, Hashable {
     /// binaries — `cargo run`, `swift run`, ad-hoc Python scripts.
     case darwinCachePath(relativePath: String)
 
+    /// Per-bundle subdirectory inside `$DARWIN_USER_CACHE_DIR/<bundle-id>/`.
+    /// Probes every first-level child of the Darwin cache root, checks for
+    /// the named subdirectory, and emits one finding per bundle whose cache
+    /// contains it. Used for things like per-app Metal AIR caches under
+    /// `<bundle-id>/com.apple.metal/` that the top-level catch-all rule
+    /// can't see.
+    case darwinCachePerApp(subdir: String)
+
     /// Glob pattern (gitignore-style) used sparingly — currently for `.egg-info`.
     case glob(pattern: String)
 
@@ -142,6 +150,9 @@ struct Rule: Sendable, Hashable, Identifiable {
     enum Scope: Sendable, Hashable, Codable {
         case projectLocal   // found by walker
         case globalCache    // found by fixed-path probe
+        case perAppCache    // per-bundle Darwin-cache subdir; gated separately
+                            // in the sidebar so the long tail of small per-app
+                            // caches doesn't dominate the default scan.
     }
 
     init(

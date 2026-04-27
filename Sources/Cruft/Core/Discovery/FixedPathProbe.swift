@@ -98,6 +98,26 @@ struct FixedPathProbe: Sendable {
                     out.append((r, URL(fileURLWithPath: full)))
                 }
 
+            case let .darwinCachePerApp(subdir):
+                guard let base = Self.darwinUserCacheDir else { continue }
+                // Trim trailing `/` for clean concatenation.
+                let baseDir = base.hasSuffix("/") ? String(base.dropLast()) : base
+                guard let bundles = try? FileManager.default.contentsOfDirectory(atPath: baseDir)
+                else { continue }
+                for bundle in bundles where !bundle.hasPrefix(".") {
+                    // Skip the framework-name top-level entries (`com.apple.metal`,
+                    // `com.apple.imageio`, …) — those are the global pool, owned
+                    // by the sibling `.darwinCachePath` rule. We only want
+                    // bundle-IDs whose own cache contains the named subdir.
+                    if bundle == subdir { continue }
+                    let candidate = "\(baseDir)/\(bundle)/\(subdir)"
+                    var isDir: ObjCBool = false
+                    if FileManager.default.fileExists(atPath: candidate, isDirectory: &isDir),
+                       isDir.boolValue {
+                        out.append((r, URL(fileURLWithPath: candidate)))
+                    }
+                }
+
             default:
                 continue
             }

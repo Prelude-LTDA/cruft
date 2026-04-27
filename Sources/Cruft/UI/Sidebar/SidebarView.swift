@@ -11,6 +11,7 @@ struct SidebarView: View {
 
             Section("Sources") {
                 SystemCachesRow(model: model)
+                PerAppCachesRow(model: model)
                 GlobalCachesRow(model: model)
                 ForEach(model.scanRoots) { root in
                     RootRow(
@@ -228,5 +229,29 @@ private struct GlobalCachesRow: View {
             Spacer()
         }
         .help("User-scoped package caches and build artifacts at known paths (Xcode DerivedData, ~/.cargo, ~/.npm, Homebrew, etc.).")
+    }
+}
+
+/// Row for per-bundle Darwin-cache subdirs (one finding per app's
+/// `com.apple.metal/` etc.). Off by default — usually a long tail of
+/// small caches that would dominate the default scan.
+private struct PerAppCachesRow: View {
+    @Bindable var model: AppModel
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Toggle(isOn: $model.perAppCachesEnabled) { EmptyView() }
+                .toggleStyle(.checkbox)
+                .labelsHidden()
+
+            Image(systemName: "app.badge")
+                .foregroundStyle(.secondary)
+                .frame(width: 18, alignment: .center)
+            Text("Apps")
+                .font(.caption)
+                .foregroundStyle(model.perAppCachesEnabled ? .primary : .secondary)
+            Spacer()
+        }
+        .help("Per-bundle shader caches under $DARWIN_USER_CACHE_DIR/<bundle-id>/. Off by default — typically hundreds of mostly-tiny rows.")
     }
 }

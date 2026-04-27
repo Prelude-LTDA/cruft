@@ -4937,5 +4937,43 @@ enum RuleCatalog {
                 ]
             )
         ),
+        Rule(
+            id: "metal.per-app-cache", displayName: "Per-App Metal Cache",
+            ecosystem: .gameDev, scope: .perAppCache,
+            matcher: .darwinCachePerApp(subdir: "com.apple.metal"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Bundled apps' compiled-Metal-shader caches — one finding per app.",
+            iconAsset: "metal",
+            brandTint: metalSilver,
+            languageKey: "swift",
+            toolKey: "metal",
+            item: ItemInfo(
+                description: "Each bundled macOS app that compiles Metal shaders gets its own subdirectory under `$DARWIN_USER_CACHE_DIR/<bundle-id>/com.apple.metal/`. This rule emits one finding per app whose cache exists, so heavy GPU users (LM Studio, OBS, video editors, AI image generators) can be cleaned individually. The top-level `com.apple.metal/` for non-bundled binaries (cargo run, swift run, scripts) stays separately catalogued via `metal.global-cache`.",
+                safetyNote: "Each app's Metal driver rebuilds its cache on the first render after clearing — perf hit only.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Metal — Apple Developer", url: "https://developer.apple.com/metal/", kind: .docs),
+                ]
+            )
+        ),
+        Rule(
+            id: "metal.per-app-mtlfe", displayName: "Per-App MetalFX Cache",
+            ecosystem: .gameDev, scope: .perAppCache,
+            matcher: .darwinCachePerApp(subdir: "com.apple.metalfe"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Bundled apps' MetalFX (upscaling) shader caches — one finding per app.",
+            iconAsset: "metal",
+            brandTint: metalSilver,
+            languageKey: "swift",
+            toolKey: "metal",
+            item: ItemInfo(
+                description: "Per-app MetalFX shader caches — sibling of `metal.per-app-cache` for apps that use Apple's spatial / temporal upscaling framework. One finding per `<bundle-id>/com.apple.metalfe/` directory.",
+                safetyNote: "Recompiled on demand by MetalFX's first invocation in each affected app.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "MetalFX — Apple Developer", url: "https://developer.apple.com/documentation/metalfx", kind: .docs),
+                ]
+            )
+        ),
     ]
 }
