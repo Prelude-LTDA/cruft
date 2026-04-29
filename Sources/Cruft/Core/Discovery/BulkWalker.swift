@@ -28,6 +28,20 @@ actor BulkWalker {
         ".fseventsd", ".Trashes", ".Spotlight-V100",
     ]
 
+    /// Skip media-library bundles. These are opaque "packages" that macOS
+    /// treats specially — descending into them trips the Media & Apple
+    /// Music / Photos TCC gate, prompting the user every launch even though
+    /// there's no dev cache inside any of them. Matched by directory
+    /// extension so a renamed library still gets caught.
+    private static let tccProtectedLibraryExtensions: Set<String> = [
+        "musiclibrary",   // Apple Music
+        "photoslibrary",  // Photos
+        "tvlibrary",      // Apple TV
+        "imovielibrary",  // iMovie
+        "fcpbundle",      // Final Cut Pro project bundle
+        "aplibrary",      // Aperture (deprecated, may linger)
+    ]
+
     init(rules: [Rule]) {
         self.rules = rules
         self.index = MatcherIndex.build(from: rules)
@@ -152,8 +166,13 @@ actor BulkWalker {
             }
 
             // Prune descent: once matched, don't walk into the dir; likewise
-            // skip default-skip names.
+            // skip default-skip names and media-library bundles whose
+            // extension would trip a TCC gate.
             if handled || skipDirNames.contains(name) {
+                continue
+            }
+            let ext = (name as NSString).pathExtension
+            if !ext.isEmpty && Self.tccProtectedLibraryExtensions.contains(ext) {
                 continue
             }
 
