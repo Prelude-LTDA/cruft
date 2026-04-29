@@ -609,7 +609,7 @@ enum RuleCatalog {
             displayName: "Kernel Debug Kit",
             ecosystem: .apple, scope: .globalCache,
             matcher: .fixedAbsolutePathChildren("/Library/Developer/KDKs"),
-            action: .shellSudo(.kdkRm), tier: .high, aggregation: .none,
+            action: .shellSudo(.pathRmRf), tier: .high, aggregation: .none,
             notes: "Kernel Debug Kits for kext debugging, 2–5 GB each.",
             iconAsset: "xcode",
             brandTint: xcodeBlue,

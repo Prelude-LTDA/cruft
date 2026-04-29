@@ -137,11 +137,11 @@ enum CleanAction: Sendable, Hashable {
         case nixCollectGarbage
         case nixLogsRm
         case macPortsCleanAll
-        case kdkRm                           // per-item `rm -rf <path>` for KDKs
-        case pathRmRf                        // generic per-item `rm -rf <path>` —
-                                             // for any rule whose finding path is
-                                             // root-owned and just needs deleting
-                                             // (MacPorts DB data dirs, etc.).
+        case pathRmRf                        // per-item `rm -rf -- '<path>'`
+                                             // for any rule whose finding path
+                                             // is root-owned and just needs
+                                             // deleting (KDKs, MacPorts DB data
+                                             // dirs, etc.).
     }
 }
 

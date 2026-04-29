@@ -283,11 +283,10 @@ struct Deleter {
         case .nixCollectGarbage:   return "/nix/var/nix/profiles/default/bin/nix-collect-garbage -d"
         case .nixLogsRm:           return "/bin/rm -rf /nix/var/log/nix"
         case .macPortsCleanAll:    return "/opt/local/bin/port clean --all installed"
-        case .kdkRm, .pathRmRf:
-            // Per-item: shell-escape the finding's path. Same implementation
-            // for both — `.kdkRm` is the original case (kept for the KDK
-            // rule's clarity); `.pathRmRf` is the generic version for any
-            // rule whose finding path needs `rm -rf` under sudo.
+        case .pathRmRf:
+            // Per-item `rm -rf <path>` under sudo. Used by any rule whose
+            // finding path is root-owned and just needs deleting (KDKs,
+            // MacPorts DB data dirs, etc.).
             //
             // SECURITY-CRITICAL: paths can legally contain `$`, backticks,
             // `$(...)`, `\n`, etc. on macOS. Double-quoted shell strings
@@ -320,7 +319,7 @@ struct Deleter {
             // `nix-collect-garbage`, etc.) don't interpolate the finding's
             // path, so the check doesn't apply to them.
             switch kind {
-            case .kdkRm, .pathRmRf:
+            case .pathRmRf:
                 guard DenyList.isAllowedForSudo(f.presentationPath) else { continue }
             case .nixCollectGarbage, .nixLogsRm, .macPortsCleanAll:
                 break
