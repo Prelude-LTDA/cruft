@@ -10,6 +10,17 @@ struct SidebarView: View {
             }
 
             Section("Sources") {
+                // Empty-state nudge for users whose code lives at non-canonical
+                // paths (e.g. ~/Documents/Projetos). Sits at the top of the
+                // Sources section so a fresh user sees it before the toggles.
+                // No dismiss animation — SwiftUI's List intercepts row-level
+                // transitions and ignores List-level animation context too.
+                if model.scanRoots.isEmpty && !model.emptyScanRootsCalloutDismissed {
+                    EmptyScanRootsCallout(
+                        addScanRoot: addScanRoot,
+                        dismiss: { model.emptyScanRootsCalloutDismissed = true }
+                    )
+                }
                 SystemCachesRow(model: model)
                 PerAppCachesRow(model: model)
                 GlobalCachesRow(model: model)
@@ -21,6 +32,9 @@ struct SidebarView: View {
                     )
                 }
                 SpotlightRow(model: model)
+                // Always-visible "Add Folder…" link. Quietly available
+                // once the empty-state nudge has done its job (or been
+                // dismissed).
                 Button {
                     addScanRoot()
                 } label: {
@@ -42,7 +56,7 @@ struct SidebarView: View {
             guard !model.scanRoots.contains(where: { $0.path == root.path }) else { return }
             var roots = model.scanRoots
             roots.append(root)
-            model.updateScanRoots(roots)   // persists + triggers rescan
+            model.updateScanRoots(roots)  // persists + triggers rescan
         }
     }
 
@@ -50,6 +64,123 @@ struct SidebarView: View {
         guard !root.isDefault else { return }
         let roots = model.scanRoots.filter { $0.path != root.path }
         model.updateScanRoots(roots)
+    }
+}
+
+/// One-shot callout shown in the Sources section when the auto-detector
+/// found no canonical project folders (`~/Developer`, `~/Code`, `~/Projects`,
+/// …). Surfaces both *why* the sidebar looks sparse and *what* to do about
+/// it, so users with non-English path names (e.g. `~/Documents/Projetos`,
+/// `~/Documents/Projets`, `~/Documents/Projekte`) aren't left wondering.
+///
+/// Disappears automatically once the user adds a folder — the only sensible
+/// dismissal action is exactly the one we want them to take, so there's no
+/// "Don't show again" toggle.
+private struct EmptyScanRootsCallout: View {
+    let addScanRoot: () -> Void
+    let dismiss: () -> Void
+
+    // Visual constants. Card uses a uniform corner radius, derived so the
+    // top-left arc shares a center with the icon's circular wrapper:
+    //   cardCornerRadius = cardPadding + iconWrapperSize / 2
+    // `padding` is the tuning lever — increase for a softer, more pillowy
+    // card; decrease for a tighter, snappier one. Concentricity holds at
+    // any value because the icon and corner share the same offset from the
+    // card's top-left edge.
+    //
+    // (`ConcentricRectangle` can't auto-derive a corner from a sibling
+    // `Circle` — its derivation only flows container→corner — so the math
+    // is ours. Per-corner control exists but doesn't earn its keep here:
+    // mixing radii reads as visually unbalanced in this small a card.)
+    private static let iconWrapperSize: CGFloat = 24
+    private static let cardPadding: CGFloat = 12
+    private static var cardCornerRadius: CGFloat {
+        cardPadding + iconWrapperSize / 2
+    }
+
+    var body: some View {
+        ZStack {
+            // Card background. Uniform `ConcentricRectangle()` reads the
+            // parent's `.containerShape(...)` and inherits its radius — the
+            // radius itself is computed from `cardPadding + iconRadius` (see
+            // top of struct), so the icon's circle and the card's corners
+            // share a common arc center.
+            //
+            // Fill recipe matches `RegenEffortSegments` above: a soft
+            // secondary-tint fill + hairline secondary-tint stroke. Reads
+            // more solidly than `.regularMaterial` in a sidebar context
+            // where there's very little behind the card to blur.
+            ConcentricRectangle()
+                .fill(Color.secondary.opacity(0.10))
+            // `.stroke` (not `.strokeBorder`) because ConcentricRectangle
+            // doesn't expose the InsettableShape API directly. At a 0.5pt
+            // line width the half-pixel straddle is invisible.
+            ConcentricRectangle()
+                .stroke(Color.secondary.opacity(0.15), lineWidth: 0.5)
+
+            VStack(alignment: .leading, spacing: 8) {
+                // Title block: icon-in-circle on the left + title/subtitle
+                // VStack on the right. Mirrors the anatomy of Apple's
+                // "Shared Library Suggestion" Photos prompt — the circular
+                // icon container reads as a small avatar, with the
+                // text column hung off its right side. `alignment: .top`
+                // anchors the icon's top to the title's top so the icon
+                // doesn't drift downward as the subtitle wraps.
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "folder.badge.questionmark")
+                        .foregroundStyle(.secondary)
+                        .font(.system(size: 12, weight: .medium))
+                        .frame(width: Self.iconWrapperSize, height: Self.iconWrapperSize)
+                        .background(Circle().fill(Color.secondary.opacity(0.18)))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Add code projects folder?")
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("We can scan each project for reclaimable space.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(nil)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+                // Concentric-pill button row: primary CTA + secondary
+                // dismiss, matching the Review/Not Now pairing in Apple's
+                // Photos prompts. `.buttonBorderShape(.capsule)` forces
+                // true rounded ends regardless of the system's default
+                // bordered shape on the current OS version. With the
+                // smaller icon (and therefore smaller card corner radius),
+                // the standard `cardPadding` is already enough inset for
+                // the button pills to feel tucked into the bottom corners
+                // — no extra trailing/bottom padding needed.
+                HStack(spacing: 6) {
+                    Spacer(minLength: 0)
+                    Button("Add folder") { addScanRoot() }
+                        .buttonStyle(.borderedProminent)
+                        .buttonBorderShape(.capsule)
+                        .controlSize(.small)
+                    Button("Not now") { dismiss() }
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.capsule)
+                        .controlSize(.small)
+                }
+                .padding(.top, 2)
+            }
+            .padding(Self.cardPadding)
+            // Force the panel to take the row's full width so the body
+            // text has room to wrap. Without `maxWidth: .infinity` the
+            // VStack hugs its tightest child, squeezing Text into a single
+            // line that truncates.
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        // Declare the container shape for the ConcentricRectangle background
+        // above. Radius is derived (see top of the struct) so that the card's
+        // top-left arc shares a center with the icon's circular wrapper.
+        .containerShape(.rect(cornerRadius: Self.cardCornerRadius))
+        .padding(.vertical, 4)
+        .listRowSeparator(.hidden)
     }
 }
 
@@ -100,9 +231,10 @@ private struct RegenEffortSegments: View {
         .buttonStyle(.plain)
         .background(
             Capsule(style: .continuous)
-                .fill(isOn
-                      ? Color.primary.opacity(0.14)
-                      : Color.clear)
+                .fill(
+                    isOn
+                        ? Color.primary.opacity(0.14)
+                        : Color.clear)
         )
         .help(tier.title)
     }
@@ -206,7 +338,9 @@ private struct SystemCachesRow: View {
                 .foregroundStyle(model.systemCachesEnabled ? .primary : .secondary)
             Spacer()
         }
-        .help("Root-owned paths (e.g. /nix/store, /opt/local/var/macports). Cleaning these requires your password.")
+        .help(
+            "Root-owned paths (e.g. /nix/store, /opt/local/var/macports). Cleaning these requires your password."
+        )
     }
 }
 
@@ -228,7 +362,9 @@ private struct GlobalCachesRow: View {
                 .foregroundStyle(model.globalCachesEnabled ? .primary : .secondary)
             Spacer()
         }
-        .help("User-scoped package caches and build artifacts at known paths (Xcode DerivedData, ~/.cargo, ~/.npm, Homebrew, etc.).")
+        .help(
+            "User-scoped package caches and build artifacts at known paths (Xcode DerivedData, ~/.cargo, ~/.npm, Homebrew, etc.)."
+        )
     }
 }
 
@@ -252,6 +388,8 @@ private struct PerAppCachesRow: View {
                 .foregroundStyle(model.perAppCachesEnabled ? .primary : .secondary)
             Spacer()
         }
-        .help("Per-bundle shader caches under $DARWIN_USER_CACHE_DIR/<bundle-id>/. Off by default — typically hundreds of mostly-tiny rows.")
+        .help(
+            "Per-bundle shader caches under $DARWIN_USER_CACHE_DIR/<bundle-id>/. Off by default — typically hundreds of mostly-tiny rows."
+        )
     }
 }

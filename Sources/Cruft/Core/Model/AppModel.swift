@@ -125,6 +125,17 @@ final class AppModel {
             UserDefaults.standard.set(sidebarVisible, forKey: Self.sidebarKey)
         }
     }
+    /// Whether the user has dismissed the "Where does your code live?"
+    /// empty-state callout shown in the sidebar when no scan roots exist.
+    /// Once dismissed, the sidebar falls back to a quiet borderless
+    /// "Add Folder…" link so we don't keep nagging — the user has signaled
+    /// they know how to add a folder. Persists across launches; never
+    /// auto-resets, even if the user later adds and then removes all roots.
+    var emptyScanRootsCalloutDismissed: Bool = AppModel.loadEmptyScanRootsCalloutDismissed() {
+        didSet {
+            UserDefaults.standard.set(emptyScanRootsCalloutDismissed, forKey: Self.emptyScanRootsCalloutDismissedKey)
+        }
+    }
     let rules: [Rule] = RuleCatalog.rules
     private let history = HistoryStore()
 
@@ -158,6 +169,7 @@ final class AppModel {
     private static let perAppCachesKey = "regen.perAppCachesEnabled.v1"
     private static let infoPanelKey = "regen.infoPanelVisible.v1"
     private static let sidebarKey = "regen.sidebarVisible.v1"
+    private static let emptyScanRootsCalloutDismissedKey = "regen.emptyScanRootsCalloutDismissed.v1"
     private static let ecosystemOrderKey = "regen.ecosystemOrder.v1"
 
     private static func loadScanRoots() -> [ScanRoot] {
@@ -217,6 +229,13 @@ final class AppModel {
         // the View menu.
         guard UserDefaults.standard.object(forKey: infoPanelKey) != nil else { return true }
         return UserDefaults.standard.bool(forKey: infoPanelKey)
+    }
+
+    private static func loadEmptyScanRootsCalloutDismissed() -> Bool {
+        // Default false — show the callout on first launch when no scan
+        // roots are detected. `bool(forKey:)` returns false when the key
+        // is unset, which is exactly what we want here.
+        return UserDefaults.standard.bool(forKey: emptyScanRootsCalloutDismissedKey)
     }
 
     private static func loadSidebarVisible() -> Bool {
