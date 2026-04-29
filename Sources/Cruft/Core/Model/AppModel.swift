@@ -211,9 +211,11 @@ final class AppModel {
     }
 
     private static func loadInfoPanelVisible() -> Bool {
-        // Default off — panel content is still being populated; users can
-        // opt in via the toolbar button.
-        guard UserDefaults.standard.object(forKey: infoPanelKey) != nil else { return false }
+        // Default on — the breakdown bar and selection details give a
+        // first-time user something to look at while the initial scan
+        // populates the list. Users can hide via the toolbar button or
+        // the View menu.
+        guard UserDefaults.standard.object(forKey: infoPanelKey) != nil else { return true }
         return UserDefaults.standard.bool(forKey: infoPanelKey)
     }
 

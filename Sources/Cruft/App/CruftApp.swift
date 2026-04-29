@@ -8,7 +8,13 @@ struct CruftApp: App {
     var body: some Scene {
         Window("Cruft", id: "main") {
             MainWindowView(model: model)
-                .frame(minWidth: 980, idealWidth: 1200,
+                // 1300×780 is the largest comfortable default that still
+                // fits a 13.6" MacBook Air (M2+, "Looks Like 1470×956",
+                // ~1470 px usable) and a stock-scaled 13" Pro M1/M2
+                // ("Looks Like 1440×900"). Larger Text mode users (1280×800
+                // effective) get clamped to fit; macOS handles that
+                // gracefully.
+                .frame(minWidth: 980, idealWidth: 1300,
                        minHeight: 620, idealHeight: 780)
         }
         .windowStyle(.titleBar)
