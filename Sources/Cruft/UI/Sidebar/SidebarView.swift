@@ -1,4 +1,36 @@
 import SwiftUI
+import AppKit
+
+/// Wraps a Bool binding with the option-click "solo this source" / "restore
+/// all" pattern from `EcoCheckbox` (FilterChipsBar.swift). Without Option,
+/// the binding behaves normally; with Option held, the click solos the
+/// given source (or restores everything if it was already solo'd) and the
+/// underlying value-set is skipped. Used by every row in the Sources
+/// section so they share one click idiom.
+private extension Binding where Value == Bool {
+    func solo(model: AppModel, source: AppModel.SourceID) -> Binding<Bool> {
+        Binding<Bool>(
+            get: { self.wrappedValue },
+            set: { newValue in
+                // SwiftUI invokes Binding setters on the main actor, but
+                // the closure type isn't statically isolated — wrap in
+                // `MainActor.assumeIsolated` so the @MainActor calls into
+                // AppModel typecheck without warnings.
+                MainActor.assumeIsolated {
+                    if NSEvent.modifierFlags.contains(.option) {
+                        if model.isOnlySource(source) {
+                            model.enableAllSources()
+                        } else {
+                            model.soloSource(source)
+                        }
+                        return
+                    }
+                    self.wrappedValue = newValue
+                }
+            }
+        )
+    }
+}
 
 struct SidebarView: View {
     @Bindable var model: AppModel
@@ -26,8 +58,8 @@ struct SidebarView: View {
                 GlobalCachesRow(model: model)
                 ForEach(model.scanRoots) { root in
                     RootRow(
+                        model: model,
                         root: root,
-                        toggle: { model.setRootEnabled(root.path, enabled: !root.enabled) },
                         remove: { removeRoot(root) }
                     )
                 }
@@ -256,28 +288,35 @@ private struct RegenEffortSegments: View {
 /// A single row representing a user-added (or default) scan root, with a
 /// Calendar-style enable checkbox and an on-hover remove button.
 private struct RootRow: View {
+    @Bindable var model: AppModel
     let root: ScanRoot
-    let toggle: () -> Void
     let remove: () -> Void
     @State private var hovering = false
 
+    private var binding: Binding<Bool> {
+        Binding<Bool>(
+            get: { root.enabled },
+            set: { model.setRootEnabled(root.path, enabled: $0) }
+        )
+        .solo(model: model, source: .scanRoot(path: root.path))
+    }
+
     var body: some View {
         HStack(spacing: 6) {
-            Toggle(isOn: Binding(get: { root.enabled }, set: { _ in toggle() })) {
-                EmptyView()
+            Toggle(isOn: binding) {
+                HStack(spacing: 6) {
+                    Image(systemName: root.exists ? "folder" : "folder.badge.questionmark")
+                        .foregroundStyle(root.exists ? Color.secondary : Color.orange)
+                        .frame(width: 18, alignment: .center)
+                    Text((root.path as NSString).abbreviatingWithTildeInPath)
+                        .font(.caption)
+                        .lineLimit(1)
+                        .truncationMode(.head)
+                        .foregroundStyle(root.enabled ? .primary : .secondary)
+                    Spacer()
+                }
             }
             .toggleStyle(.checkbox)
-            .labelsHidden()
-
-            Image(systemName: root.exists ? "folder" : "folder.badge.questionmark")
-                .foregroundStyle(root.exists ? Color.secondary : Color.orange)
-                .frame(width: 18, alignment: .center)
-            Text((root.path as NSString).abbreviatingWithTildeInPath)
-                .font(.caption)
-                .lineLimit(1)
-                .truncationMode(.head)
-                .foregroundStyle(root.enabled ? .primary : .secondary)
-            Spacer()
             if !root.isDefault, hovering {
                 Button(action: remove) {
                     Image(systemName: "minus.circle").foregroundStyle(.secondary)
@@ -302,20 +341,19 @@ private struct SpotlightRow: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        HStack(spacing: 6) {
-            Toggle(isOn: $model.spotlightEnabled) { EmptyView() }
-                .toggleStyle(.checkbox)
-                .labelsHidden()
-
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-                .frame(width: 18, alignment: .center)
-            Text("Spotlight")
-                .font(.caption)
-                .foregroundStyle(model.spotlightEnabled ? .primary : .secondary)
-            Spacer()
+        Toggle(isOn: $model.spotlightEnabled.solo(model: model, source: .spotlight)) {
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18, alignment: .center)
+                Text("Spotlight")
+                    .font(.caption)
+                    .foregroundStyle(model.spotlightEnabled ? .primary : .secondary)
+                Spacer()
+            }
         }
-        .help("Include matches found anywhere in your home via Spotlight. Dimmed in the list.")
+        .toggleStyle(.checkbox)
+        .help("Include matches found anywhere in your home via Spotlight. Dimmed in the list. Option-click to solo / restore.")
     }
 }
 
@@ -325,21 +363,20 @@ private struct SystemCachesRow: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        HStack(spacing: 6) {
-            Toggle(isOn: $model.systemCachesEnabled) { EmptyView() }
-                .toggleStyle(.checkbox)
-                .labelsHidden()
-
-            Image(systemName: "externaldrive")
-                .foregroundStyle(.secondary)
-                .frame(width: 18, alignment: .center)
-            Text("System")
-                .font(.caption)
-                .foregroundStyle(model.systemCachesEnabled ? .primary : .secondary)
-            Spacer()
+        Toggle(isOn: $model.systemCachesEnabled.solo(model: model, source: .system)) {
+            HStack(spacing: 6) {
+                Image(systemName: "externaldrive")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18, alignment: .center)
+                Text("System")
+                    .font(.caption)
+                    .foregroundStyle(model.systemCachesEnabled ? .primary : .secondary)
+                Spacer()
+            }
         }
+        .toggleStyle(.checkbox)
         .help(
-            "Root-owned paths (e.g. /nix/store, /opt/local/var/macports). Cleaning these requires your password."
+            "Root-owned paths (e.g. /nix/store, /opt/local/var/macports). Cleaning these requires your password. Option-click to solo / restore."
         )
     }
 }
@@ -349,21 +386,20 @@ private struct GlobalCachesRow: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        HStack(spacing: 6) {
-            Toggle(isOn: $model.globalCachesEnabled) { EmptyView() }
-                .toggleStyle(.checkbox)
-                .labelsHidden()
-
-            Image(systemName: "house")
-                .foregroundStyle(.secondary)
-                .frame(width: 18, alignment: .center)
-            Text("Current User")
-                .font(.caption)
-                .foregroundStyle(model.globalCachesEnabled ? .primary : .secondary)
-            Spacer()
+        Toggle(isOn: $model.globalCachesEnabled.solo(model: model, source: .globalUser)) {
+            HStack(spacing: 6) {
+                Image(systemName: "house")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18, alignment: .center)
+                Text("Current User")
+                    .font(.caption)
+                    .foregroundStyle(model.globalCachesEnabled ? .primary : .secondary)
+                Spacer()
+            }
         }
+        .toggleStyle(.checkbox)
         .help(
-            "User-scoped package caches and build artifacts at known paths (Xcode DerivedData, ~/.cargo, ~/.npm, Homebrew, etc.)."
+            "User-scoped package caches and build artifacts at known paths (Xcode DerivedData, ~/.cargo, ~/.npm, Homebrew, etc.). Option-click to solo / restore."
         )
     }
 }
@@ -375,21 +411,20 @@ private struct PerAppCachesRow: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        HStack(spacing: 6) {
-            Toggle(isOn: $model.perAppCachesEnabled) { EmptyView() }
-                .toggleStyle(.checkbox)
-                .labelsHidden()
-
-            Image(systemName: "app.badge")
-                .foregroundStyle(.secondary)
-                .frame(width: 18, alignment: .center)
-            Text("Apps")
-                .font(.caption)
-                .foregroundStyle(model.perAppCachesEnabled ? .primary : .secondary)
-            Spacer()
+        Toggle(isOn: $model.perAppCachesEnabled.solo(model: model, source: .perApp)) {
+            HStack(spacing: 6) {
+                Image(systemName: "app.badge")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18, alignment: .center)
+                Text("Apps")
+                    .font(.caption)
+                    .foregroundStyle(model.perAppCachesEnabled ? .primary : .secondary)
+                Spacer()
+            }
         }
+        .toggleStyle(.checkbox)
         .help(
-            "Per-bundle shader caches under $DARWIN_USER_CACHE_DIR/<bundle-id>/. Off by default — typically hundreds of mostly-tiny rows."
+            "Per-bundle shader caches under $DARWIN_USER_CACHE_DIR/<bundle-id>/. Off by default — typically hundreds of mostly-tiny rows. Option-click to solo / restore."
         )
     }
 }

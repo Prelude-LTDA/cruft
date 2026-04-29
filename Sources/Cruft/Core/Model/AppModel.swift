@@ -264,6 +264,74 @@ final class AppModel {
         }
     }
 
+    // MARK: - Sources solo (option-click)
+
+    /// Identifies one of the checkboxes in the sidebar's Sources section.
+    /// Used by the option-click "solo this source" handler so the same
+    /// pattern works uniformly across the global toggles, individual scan
+    /// roots, and Spotlight.
+    enum SourceID: Equatable, Hashable {
+        case system, perApp, globalUser, spotlight
+        case scanRoot(path: String)
+    }
+
+    /// Whether the given source is currently the *only* enabled one across
+    /// the entire Sources section. Drives the option-click toggle: if
+    /// already solo'd, option-click restores everything; otherwise it
+    /// solos this one.
+    func isOnlySource(_ id: SourceID) -> Bool {
+        let states = sourceStates()
+        return states[id] == true && states.values.filter { $0 }.count == 1
+    }
+
+    /// Solo a single source — set it on, everything else off. Mirrors
+    /// `EcoCheckbox`'s option-click behavior in FilterChipsBar.
+    func soloSource(_ id: SourceID) {
+        systemCachesEnabled = (id == .system)
+        perAppCachesEnabled = (id == .perApp)
+        globalCachesEnabled = (id == .globalUser)
+        spotlightEnabled = (id == .spotlight)
+        var roots = scanRoots
+        for i in roots.indices {
+            roots[i].enabled = (.scanRoot(path: roots[i].path) == id)
+        }
+        scanRoots = roots
+        persistScanRootsEnabledStates()
+    }
+
+    /// Re-enable every source (the "restore from solo" action).
+    func enableAllSources() {
+        systemCachesEnabled = true
+        perAppCachesEnabled = true
+        globalCachesEnabled = true
+        spotlightEnabled = true
+        var roots = scanRoots
+        for i in roots.indices {
+            roots[i].enabled = true
+        }
+        scanRoots = roots
+        persistScanRootsEnabledStates()
+    }
+
+    private func sourceStates() -> [SourceID: Bool] {
+        var s: [SourceID: Bool] = [
+            .system: systemCachesEnabled,
+            .perApp: perAppCachesEnabled,
+            .globalUser: globalCachesEnabled,
+            .spotlight: spotlightEnabled,
+        ]
+        for r in scanRoots {
+            s[.scanRoot(path: r.path)] = r.enabled
+        }
+        return s
+    }
+
+    private func persistScanRootsEnabledStates() {
+        if let data = try? JSONEncoder().encode(scanRoots) {
+            UserDefaults.standard.set(data, forKey: Self.scanRootsKey)
+        }
+    }
+
     // MARK: - Tasks
 
     private var scanTask: Task<Void, Never>?
