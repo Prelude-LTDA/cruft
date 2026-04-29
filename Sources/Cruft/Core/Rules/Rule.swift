@@ -39,6 +39,14 @@ enum Matcher: Sendable, Hashable {
     /// individual items are sizable and deletable.
     case fixedAbsolutePathChildren(String)
 
+    /// Absolute path with a glob in its *last* component (literal parent +
+    /// `fnmatch`-style filename pattern). Used for predictable but
+    /// version-suffixed paths like `/opt/homebrew/var/postgresql@*` so a
+    /// single rule covers `postgresql@14`, `@15`, `@16`, `@17`, etc. without
+    /// enumerating each version. The parent must be literal — multi-segment
+    /// globs are not supported.
+    case fixedAbsolutePathGlob(pattern: String)
+
     /// Path inside `$DARWIN_USER_CACHE_DIR` (the dynamic per-user cache
     /// at `/private/var/folders/<X>/<Y>/C/`). Resolves the prefix at probe
     /// time via `confstr(_CS_DARWIN_USER_CACHE_DIR)`. Used for top-level
@@ -130,6 +138,10 @@ enum CleanAction: Sendable, Hashable {
         case nixLogsRm
         case macPortsCleanAll
         case kdkRm                           // per-item `rm -rf <path>` for KDKs
+        case pathRmRf                        // generic per-item `rm -rf <path>` —
+                                             // for any rule whose finding path is
+                                             // root-owned and just needs deleting
+                                             // (MacPorts DB data dirs, etc.).
     }
 }
 

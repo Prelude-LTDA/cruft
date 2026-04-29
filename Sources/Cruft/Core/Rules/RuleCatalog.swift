@@ -31,6 +31,7 @@ enum RuleCatalog {
         out.append(contentsOf: packageManagers)
         out.append(contentsOf: devops)
         out.append(contentsOf: gameDev)
+        out.append(contentsOf: database)
         return out
     }()
 
@@ -5251,4 +5252,531 @@ enum RuleCatalog {
             )
         ),
     ]
+
+    // MARK: - Databases (PostgreSQL / MySQL / MariaDB / Redis / MongoDB)
+    //
+    // Almost everything here is `.extreme` regen — these are user data, not
+    // build artifacts. The rules surface the directories so the user *can*
+    // wipe them when they actually mean to (e.g. burning a stale Postgres
+    // dev DB and `initdb`-ing fresh), but the tier badges and ItemInfo
+    // safety notes flag them clearly. A handful of `.low` entries cover
+    // the GUI tools and DB-side rotation files where reclaim is actually
+    // free.
+    //
+    // Paths target Apple Silicon Homebrew (`/opt/homebrew/var/...`) since
+    // that's the dominant macOS dev install in 2026. Intel Homebrew
+    // (`/usr/local/var/...`) and MacPorts variants can be added later if
+    // users ask — they'd be sibling rules with the same ItemInfo.
+
+    private static let postgresBlue    = Color(red: 0x33/255, green: 0x67/255, blue: 0x91/255)
+    private static let mysqlBlue       = Color(red: 0x00/255, green: 0x75/255, blue: 0x8F/255)
+    private static let mariadbBrown    = Color(red: 0xC0/255, green: 0x76/255, blue: 0x5B/255)
+    private static let redisRed        = Color(red: 0xDC/255, green: 0x38/255, blue: 0x2D/255)
+    private static let mongoGreen      = Color(red: 0x13/255, green: 0xAA/255, blue: 0x52/255)
+    private static let dbeaverBrown    = Color(red: 0x37/255, green: 0x29/255, blue: 0x23/255)
+    private static let elasticTeal     = Color(red: 0x00/255, green: 0xBF/255, blue: 0xB3/255)
+    private static let kafkaBlack      = Color(red: 0x23/255, green: 0x12/255, blue: 0x33/255)
+    private static let zookeeperOrange = Color(red: 0xE5/255, green: 0x65/255, blue: 0x32/255)
+    private static let dbnginOrange    = Color(red: 0xF1/255, green: 0x83/255, blue: 0x2A/255)
+    private static let posticoBlue     = Color(red: 0x2E/255, green: 0x65/255, blue: 0x9B/255)
+    private static let tablePlusSlate  = Color(red: 0x37/255, green: 0x47/255, blue: 0x5C/255)
+
+    private static let database: [Rule] = {
+        var rules: [Rule] = []
+
+        // ── PostgreSQL ────────────────────────────────────────────────────
+        // One rule covers every Homebrew-installed major version
+        // (`postgresql@14`, `@15`, `@16`, `@17`, …) thanks to the
+        // `.fixedAbsolutePathGlob` matcher. Each match becomes a separate
+        // finding so per-version sizes / paths stay distinguishable.
+        rules.append(Rule(
+            id: "postgres.brew-data",
+            displayName: "PostgreSQL Data Directory",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePathGlob(pattern: "/opt/homebrew/var/postgresql@*"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Homebrew PostgreSQL data — every database on this server.",
+            iconAsset: "postgresql",
+            sfSymbol: "cylinder.fill",
+            brandTint: postgresBlue,
+            toolKey: "postgres",
+            item: ItemInfo(
+                description: "`/opt/homebrew/var/postgresql@<N>` is the data directory (`PGDATA`) for a Homebrew-installed PostgreSQL major version. Holds every database on the instance: `base/<oid>/` per database, `pg_wal/` for the write-ahead log, `pg_xact/` for transaction commit status, plus configuration (`postgresql.conf`, `pg_hba.conf`). Multiple major versions can coexist — Cruft surfaces each one separately.",
+                safetyNote: "**Deletion is irreversible.** Every database on this server will be lost. Stop the service first (`brew services stop postgresql@<N>`), dump anything you want to keep with `pg_dumpall`, then `initdb` to start fresh.",
+                regenCommand: "initdb /opt/homebrew/var/postgresql@<N>",
+                links: [
+                    InfoLink(title: "PostgreSQL — File Locations", url: "https://www.postgresql.org/docs/current/runtime-config-file-locations.html", kind: .docs),
+                    InfoLink(title: "PostgreSQL — pg_dumpall", url: "https://www.postgresql.org/docs/current/app-pg-dumpall.html", kind: .docs),
+                ]
+            )
+        ))
+
+        rules.append(Rule(
+            id: "postgres.app-data",
+            displayName: "Postgres.app Server Cluster",
+            ecosystem: .database, scope: .globalCache,
+            // One finding per server cluster (`var-14/`, `var-15/`, `var-16/`,
+            // …) so users can clean a retired major version without nuking
+            // the active one.
+            matcher: .fixedPathChildren(relativeToHome: "Library/Application Support/Postgres"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Postgres.app — one finding per server cluster.",
+            iconAsset: "postgresql",
+            sfSymbol: "cylinder.fill",
+            brandTint: postgresBlue,
+            toolKey: "postgres",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/Postgres/var-<N>/` is one Postgres.app server cluster — a full PostgreSQL data directory (`PGDATA`) equivalent to `/opt/homebrew/var/postgresql@N/`. Postgres.app manages each major version separately so users can run multiple PG versions concurrently.",
+                safetyNote: "**Deletion is irreversible.** Every database in this specific server cluster will be lost. Use Postgres.app's UI to dump or migrate first; the app re-creates the per-version dir on next launch.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Postgres.app", url: "https://postgresapp.com/", kind: .official),
+                ]
+            )
+        ))
+
+        // ── MySQL / MariaDB ───────────────────────────────────────────────
+        // Glob covers the unversioned `mysql` formula and the versioned
+        // ones (`mysql@5.7`, `mysql@8.0`, `mysql@8.4`) in one rule.
+        rules.append(Rule(
+            id: "mysql.brew-data",
+            displayName: "MySQL Data Directory",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePathGlob(pattern: "/opt/homebrew/var/mysql*"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Homebrew MySQL data — every schema on this server.",
+            iconAsset: "mysql",
+            sfSymbol: "cylinder.fill",
+            brandTint: mysqlBlue,
+            toolKey: "mysql",
+            item: ItemInfo(
+                description: "`/opt/homebrew/var/mysql<suffix>/` is a MySQL data directory (`datadir`) — the unsuffixed form is the default `mysql` formula; suffixed forms (`mysql@5.7/`, `mysql@8.0/`, `mysql@8.4/`) come from the version-pinned formulas. Contains the system tablespace (`ibdata1`), per-schema folders with `.ibd` tablespace files, the InnoDB redo log (`ib_logfile*`), the binary log (`mysql-bin.*`), and configuration metadata.",
+                safetyNote: "**Deletion is irreversible.** Every schema, including `mysql.user`, will be lost. Stop the server (`brew services stop mysql<@N>`), `mysqldump --all-databases` anything you want to keep, then `mysqld --initialize` to start fresh.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "MySQL — Data Directory", url: "https://dev.mysql.com/doc/refman/8.0/en/data-directory.html", kind: .docs),
+                    InfoLink(title: "MySQL — mysqldump", url: "https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html", kind: .docs),
+                ]
+            )
+        ))
+
+        rules.append(Rule(
+            id: "mariadb.brew-data",
+            displayName: "MariaDB Data Directory",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePath("/opt/homebrew/var/mariadb"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Homebrew MariaDB data — every schema on this server.",
+            iconAsset: "mariadb",
+            sfSymbol: "cylinder.fill",
+            brandTint: mariadbBrown,
+            toolKey: "mariadb",
+            item: ItemInfo(
+                description: "`/opt/homebrew/var/mariadb` is the MariaDB data directory. Layout matches MySQL's (`ibdata1`, per-schema `.ibd` files, redo log, binary log) since MariaDB forked from MySQL.",
+                safetyNote: "**Deletion is irreversible.** Stop the server (`brew services stop mariadb`), `mariadb-dump --all-databases` anything worth keeping, then `mariadb-install-db` to start fresh.",
+                regenCommand: "mariadb-install-db --datadir=/opt/homebrew/var/mariadb",
+                links: [
+                    InfoLink(title: "MariaDB — Data Directory", url: "https://mariadb.com/kb/en/data-directory/", kind: .docs),
+                ]
+            )
+        ))
+
+        // ── Redis ─────────────────────────────────────────────────────────
+        rules.append(Rule(
+            id: "redis.brew-data",
+            displayName: "Redis Data Directory",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePath("/opt/homebrew/var/db/redis"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Homebrew Redis — RDB snapshot + AOF append-only log.",
+            iconAsset: "redis",
+            sfSymbol: "cylinder.fill",
+            brandTint: redisRed,
+            toolKey: "redis",
+            item: ItemInfo(
+                description: "`/opt/homebrew/var/db/redis` holds Redis's persistence files: `dump.rdb` (point-in-time snapshot, written periodically based on `save` thresholds) and/or `appendonly.aof` (every write since the last rewrite, replayed on startup). One or both may be present depending on `redis.conf` settings.",
+                safetyNote: "**Deletion is irreversible** if persistence is the only copy of the data. Stop the server (`brew services stop redis`), `BGSAVE` first if you want a fresh snapshot, then delete. A fresh start re-creates an empty dataset on next service boot.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Redis — Persistence", url: "https://redis.io/docs/management/persistence/", kind: .docs),
+                ]
+            )
+        ))
+
+        // ── MongoDB ───────────────────────────────────────────────────────
+        // Glob covers the default `mongodb-community` formula and the
+        // version-pinned ones (`mongodb-community@5.0`, `@6.0`, `@7.0`, …).
+        rules.append(Rule(
+            id: "mongodb.brew-data",
+            displayName: "MongoDB Data Directory",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePathGlob(pattern: "/opt/homebrew/var/mongodb*"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Homebrew MongoDB data — every collection on this server.",
+            iconAsset: "mongodb",
+            sfSymbol: "cylinder.fill",
+            brandTint: mongoGreen,
+            toolKey: "mongodb",
+            item: ItemInfo(
+                description: "`/opt/homebrew/var/mongodb<suffix>/` is the MongoDB data path (`storage.dbPath`) — unsuffixed for the default `mongodb-community` formula, suffixed (`@5.0`, `@6.0`, `@7.0`, …) for version-pinned formulas. With the default WiredTiger engine, it holds the WiredTiger journal, collection-and-index `.wt` files, storage engine metadata (`WiredTiger.wt`, `WiredTiger.turtle`), and the rotated `diagnostic.data/` server-stat archive.",
+                safetyNote: "**Deletion is irreversible.** Every collection, including `admin.system.users`, will be lost. Stop the server (`brew services stop mongodb-community`), `mongodump` anything worth keeping, then start fresh — `mongod` re-creates the dbPath on next launch.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "MongoDB — Storage", url: "https://www.mongodb.com/docs/manual/core/storage-engines/", kind: .docs),
+                    InfoLink(title: "MongoDB — mongodump", url: "https://www.mongodb.com/docs/database-tools/mongodump/", kind: .docs),
+                ]
+            )
+        ))
+
+        // ── Elasticsearch ─────────────────────────────────────────────────
+        // Homebrew formula `elastic/tap/elasticsearch-full` (the one most
+        // dev users actually have, since Elastic pulled the core formula
+        // from homebrew-core) writes data to `/opt/homebrew/var/lib/
+        // elasticsearch/`. The OSS-only tap stores at the same path.
+        rules.append(Rule(
+            id: "elasticsearch.brew-data",
+            displayName: "Elasticsearch Data Directory",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePath("/opt/homebrew/var/lib/elasticsearch"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Homebrew Elasticsearch — every cluster index on this node.",
+            iconAsset: "elasticsearch",
+            sfSymbol: "cylinder.fill",
+            brandTint: elasticTeal,
+            toolKey: "elasticsearch",
+            item: ItemInfo(
+                description: "`/opt/homebrew/var/lib/elasticsearch/` (`path.data` in `elasticsearch.yml`) holds every Lucene index segment, the cluster state, and per-node translog files. Each index is stored under `nodes/<n>/indices/<uuid>/` with a directory per shard.",
+                safetyNote: "**Deletion is irreversible.** All indexed documents on this node are gone. Take a snapshot first (`PUT _snapshot/<repo>/<name>`) if there's anything you can't reindex from the source-of-truth.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Elasticsearch — Path Settings", url: "https://www.elastic.co/guide/en/elasticsearch/reference/current/path-settings.html", kind: .docs),
+                    InfoLink(title: "Elasticsearch — Snapshots", url: "https://www.elastic.co/guide/en/elasticsearch/reference/current/snapshot-restore.html", kind: .docs),
+                ]
+            )
+        ))
+
+        // ── Apache Kafka + ZooKeeper ──────────────────────────────────────
+        // Kafka's broker stores topic data inside log segment files at
+        // `/opt/homebrew/var/lib/kafka-logs/` (named confusingly — it's
+        // not "logs" in the diagnostic sense, it's the durable topic store).
+        rules.append(Rule(
+            id: "kafka.brew-data",
+            displayName: "Kafka Broker Topic Store",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePath("/opt/homebrew/var/lib/kafka-logs"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Homebrew Kafka — every topic's log segments.",
+            iconAsset: "apache-kafka",
+            sfSymbol: "cylinder.fill",
+            brandTint: kafkaBlack,
+            toolKey: "kafka",
+            item: ItemInfo(
+                description: "`/opt/homebrew/var/lib/kafka-logs/` is Kafka's `log.dirs` location — one subdirectory per topic-partition, each with `.log` segment files (the actual messages), `.index` offset indices, and `.timeindex` time-based indices. The directory name is misleading: this is the message store, not a diagnostic log.",
+                safetyNote: "**Deletion is irreversible.** All topic data is gone. Stop the broker (`brew services stop kafka`), use Kafka MirrorMaker or `kafka-console-consumer` + reproducer to migrate first if needed.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Kafka — Storage Internals", url: "https://kafka.apache.org/documentation/#log", kind: .docs),
+                ]
+            )
+        ))
+
+        rules.append(Rule(
+            id: "zookeeper.brew-data",
+            displayName: "ZooKeeper Data Directory",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePath("/opt/homebrew/var/run/zookeeper/data"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Homebrew ZooKeeper — cluster state snapshots + transaction log.",
+            iconAsset: "apache-zookeeper",
+            sfSymbol: "cylinder.fill",
+            brandTint: zookeeperOrange,
+            toolKey: "zookeeper",
+            item: ItemInfo(
+                description: "`/opt/homebrew/var/run/zookeeper/data/` is ZooKeeper's `dataDir` — `version-2/snapshot.<zxid>` files (point-in-time tree snapshots) and `version-2/log.<zxid>` files (the transaction log replayed on restart). Often paired with a Kafka broker for older Kafka versions; KRaft-mode Kafka (3.3+) doesn't need it.",
+                safetyNote: "**Deletion is irreversible.** Cluster state, ACLs, and ephemeral nodes are gone. If this is a Kafka coordinator, the broker may not boot until ZooKeeper has been re-initialized.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "ZooKeeper — Administering", url: "https://zookeeper.apache.org/doc/current/zookeeperAdmin.html", kind: .docs),
+                ]
+            )
+        ))
+
+        // ── Service log files (low tier — regenerated on next service tick)
+        // The brew services framework writes everything-it-runs's logs to
+        // `/opt/homebrew/var/log/<service>.log`. These accumulate forever
+        // and are diagnostic-only — safe to delete.
+        rules.append(Rule(
+            id: "postgres.brew-logs",
+            displayName: "PostgreSQL Service Logs",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePathGlob(pattern: "/opt/homebrew/var/log/postgresql@*.log"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Homebrew brew-services log file (one per major version).",
+            iconAsset: "postgresql",
+            sfSymbol: "doc.text",
+            brandTint: postgresBlue,
+            toolKey: "postgres",
+            item: ItemInfo(
+                description: "`/opt/homebrew/var/log/postgresql@<N>.log` is the brew-services-managed log for PostgreSQL <N>. It captures stderr from `postgres` (startup messages, slow queries if logged, autovacuum, errors). Rotates only when you restart the service, so it accumulates indefinitely.",
+                safetyNote: "Re-created on the next `brew services restart postgresql@<N>` — the running server may keep an open file handle, in which case the file truncates rather than disappearing.",
+                regenCommand: nil,
+                links: []
+            )
+        ))
+
+        for service in [
+            ("mysql", "MySQL", mysqlBlue),
+            ("mariadb", "MariaDB", mariadbBrown),
+            ("redis", "Redis", redisRed),
+            ("mongodb", "MongoDB", mongoGreen),
+        ] {
+            // Glob `<service>*.log` so versioned-formula log files like
+            // `mysql@8.0.log` / `mongodb-community@7.0.log` get caught
+            // alongside the unsuffixed default.
+            rules.append(Rule(
+                id: "\(service.0).brew-log",
+                displayName: "\(service.1) Service Log",
+                ecosystem: .database, scope: .globalCache,
+                matcher: .fixedAbsolutePathGlob(pattern: "/opt/homebrew/var/log/\(service.0)*.log"),
+                action: .trash, tier: .low, aggregation: .none,
+                notes: "Homebrew brew-services log file (one per formula variant).",
+                iconAsset: service.0,
+                sfSymbol: "doc.text",
+                brandTint: service.2,
+                toolKey: service.0,
+                item: ItemInfo(
+                    description: "`/opt/homebrew/var/log/\(service.0)<suffix>.log` is brew-services' captured stderr/stdout for a \(service.1) server — startup, slow queries, errors, etc. The unsuffixed name is the default formula; suffixed forms (`@8.0`, `@5.7`, …) come from version-pinned formulas. Diagnostic-only.",
+                    safetyNote: "Re-created on the next `brew services restart \(service.0)`. A running server may hold an open handle, in which case the file gets truncated instead of removed.",
+                    regenCommand: nil,
+                    links: []
+                )
+            ))
+        }
+
+        // ── MacPorts database data dirs (root-owned, sudo cleanup) ───────
+        // Cruft already covers the MacPorts build cache (`macports.clean-all`
+        // in the Package Manager ecosystem); these rules add the per-DB
+        // data directories under `/opt/local/var/db/`. All root-owned, so
+        // deletion routes through `.shellSudo(.pathRmRf)` — one password
+        // prompt for the whole batch (Deleter dedupes commands).
+        //
+        // Paths are convention-based; some MacPorts versions or port
+        // variants may differ slightly. Globs catch version-suffixed
+        // siblings (e.g. `postgresql14`, `postgresql15`, …) in one rule.
+        rules.append(Rule(
+            id: "postgres.macports-data",
+            displayName: "PostgreSQL Data Directory (MacPorts)",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePathGlob(pattern: "/opt/local/var/db/postgresql*"),
+            action: .shellSudo(.pathRmRf), tier: .extreme, aggregation: .none,
+            notes: "MacPorts PostgreSQL data — every database on this server.",
+            iconAsset: "postgresql",
+            sfSymbol: "cylinder.fill",
+            brandTint: postgresBlue,
+            toolKey: "postgres",
+            item: ItemInfo(
+                description: "`/opt/local/var/db/postgresql<N>/` (typically with a `defaultdb/` data dir inside) is the data root for a MacPorts-installed PostgreSQL major version. Layout matches Homebrew's PGDATA — `base/<oid>/`, `pg_wal/`, `pg_xact/`, configuration files. The `defaultdb/` subdir is the actual `PGDATA`; the parent holds version metadata.",
+                safetyNote: "**Deletion is irreversible.** Cruft deletes the entire version directory under sudo. Stop the service first (`sudo port unload postgresql<N>-server`), `pg_dumpall` what you want to keep, then re-run the postgresql<N>-server's port-provided init script.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "MacPorts Guide — port", url: "https://guide.macports.org/", kind: .docs),
+                    InfoLink(title: "PostgreSQL — File Locations", url: "https://www.postgresql.org/docs/current/runtime-config-file-locations.html", kind: .docs),
+                ]
+            )
+        ))
+
+        rules.append(Rule(
+            id: "mysql.macports-data",
+            displayName: "MySQL Data Directory (MacPorts)",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePathGlob(pattern: "/opt/local/var/db/mysql*"),
+            action: .shellSudo(.pathRmRf), tier: .extreme, aggregation: .none,
+            notes: "MacPorts MySQL data — every schema on this server.",
+            iconAsset: "mysql",
+            sfSymbol: "cylinder.fill",
+            brandTint: mysqlBlue,
+            toolKey: "mysql",
+            item: ItemInfo(
+                description: "`/opt/local/var/db/mysql<N>/` is the MacPorts MySQL `datadir`. Matches Homebrew's MySQL layout: `ibdata1`, per-schema `.ibd` files, redo log, binary log.",
+                safetyNote: "**Deletion is irreversible.** Stop the server (`sudo port unload mysql<N>-server`), `mysqldump --all-databases` first, then run the port's init script to start fresh.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "MacPorts Guide — port", url: "https://guide.macports.org/", kind: .docs),
+                    InfoLink(title: "MySQL — Data Directory", url: "https://dev.mysql.com/doc/refman/8.0/en/data-directory.html", kind: .docs),
+                ]
+            )
+        ))
+
+        rules.append(Rule(
+            id: "mariadb.macports-data",
+            displayName: "MariaDB Data Directory (MacPorts)",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePathGlob(pattern: "/opt/local/var/db/mariadb*"),
+            action: .shellSudo(.pathRmRf), tier: .extreme, aggregation: .none,
+            notes: "MacPorts MariaDB data — every schema on this server.",
+            iconAsset: "mariadb",
+            sfSymbol: "cylinder.fill",
+            brandTint: mariadbBrown,
+            toolKey: "mariadb",
+            item: ItemInfo(
+                description: "`/opt/local/var/db/mariadb-<X>.<Y>/` is the MacPorts MariaDB datadir. Matches MySQL's layout (MariaDB forked from MySQL).",
+                safetyNote: "**Deletion is irreversible.** Stop the server (`sudo port unload mariadb-<X>.<Y>-server`), `mariadb-dump --all-databases` first, then `mariadb-install-db`.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "MariaDB — Data Directory", url: "https://mariadb.com/kb/en/data-directory/", kind: .docs),
+                ]
+            )
+        ))
+
+        rules.append(Rule(
+            id: "redis.macports-data",
+            displayName: "Redis Data Directory (MacPorts)",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedAbsolutePathGlob(pattern: "/opt/local/var/db/redis*"),
+            action: .shellSudo(.pathRmRf), tier: .extreme, aggregation: .none,
+            notes: "MacPorts Redis — RDB snapshot + AOF append-only log.",
+            iconAsset: "redis",
+            sfSymbol: "cylinder.fill",
+            brandTint: redisRed,
+            toolKey: "redis",
+            item: ItemInfo(
+                description: "`/opt/local/var/db/redis<suffix>/` holds Redis's persistence files (`dump.rdb` snapshot, `appendonly.aof`). Layout matches Homebrew's `/opt/homebrew/var/db/redis/`. Glob picks up the unsuffixed `redis` port plus the `redis-sentinel` variant.",
+                safetyNote: "**Deletion is irreversible** if persistence is the only copy. Stop the server (`sudo port unload redis`), `BGSAVE` if you want a final snapshot, then delete.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Redis — Persistence", url: "https://redis.io/docs/management/persistence/", kind: .docs),
+                ]
+            )
+        ))
+
+        rules.append(Rule(
+            id: "mongodb.macports-data",
+            displayName: "MongoDB Data Directory (MacPorts)",
+            ecosystem: .database, scope: .globalCache,
+            // Glob covers `mongodb`, `mongodb40`, `mongodb44`, `mongodb50`,
+            // `mongodb60`, … — MacPorts uses the version as a numeric
+            // port-name suffix rather than `@N`.
+            matcher: .fixedAbsolutePathGlob(pattern: "/opt/local/var/db/mongodb*"),
+            action: .shellSudo(.pathRmRf), tier: .extreme, aggregation: .none,
+            notes: "MacPorts MongoDB data — every collection on this server.",
+            iconAsset: "mongodb",
+            sfSymbol: "cylinder.fill",
+            brandTint: mongoGreen,
+            toolKey: "mongodb",
+            item: ItemInfo(
+                description: "`/opt/local/var/db/mongodb<NN>/` is the MongoDB `storage.dbPath`. WiredTiger journal, `.wt` collection/index files, and rotated `diagnostic.data/`. Multiple major versions can coexist via separate ports (`mongodb50`, `mongodb60`, …); each becomes a separate finding.",
+                safetyNote: "**Deletion is irreversible.** Stop the server (`sudo port unload mongodb<NN>`), `mongodump` what you want to keep, then start fresh.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "MongoDB — Storage", url: "https://www.mongodb.com/docs/manual/core/storage-engines/", kind: .docs),
+                ]
+            )
+        ))
+
+        // ── DBngin (local DB instance manager) ───────────────────────────
+        // DBngin is a TinyApp utility that spins up local PostgreSQL,
+        // MySQL/MariaDB, Redis, and MongoDB servers — with each instance's
+        // data living inside the app's Application Support directory.
+        // Emits one finding per service-type folder (`postgres/`, `mysql/`,
+        // `redis/`, `mongodb/`) so users can clean a retired engine without
+        // wiping the engine they currently use.
+        rules.append(Rule(
+            id: "dbngin.instances",
+            displayName: "DBngin Instance Data",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedPathChildren(relativeToHome: "Library/Application Support/com.tinyapp.dbnginapp"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "DBngin instance data — one finding per service type.",
+            iconAsset: "dbngin",
+            sfSymbol: "cylinder.split.1x2.fill",
+            brandTint: dbnginOrange,
+            toolKey: "dbngin",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/com.tinyapp.dbnginapp/<service>/` is one DBngin service-type folder (e.g. `postgres/`, `mysql/`, `redis/`, `mongodb/`). Inside is one subdirectory per version DBngin has downloaded (`16.0/`, `8.0.32/`, …), each containing the server binaries *and* a `data/` directory with the actual database files.",
+                safetyNote: "**Deletion is irreversible.** All databases across every version DBngin tracks for this service will be lost. Stop every instance of this engine from the app first; export anything worth keeping with the per-DB tooling (`pg_dumpall`, `mysqldump`, `mongodump`, `BGSAVE`+copy `dump.rdb`); then delete. DBngin re-creates an empty per-version folder on next spin-up.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "DBngin", url: "https://dbngin.com/", kind: .official),
+                ]
+            )
+        ))
+
+        // ── Postico 2 cache ───────────────────────────────────────────────
+        // Connection profiles live in `~/Library/Application Support/
+        // at.eggerapps.Postico/`; this rule deliberately targets only
+        // the `~/Library/Caches/` half so saved connections are untouched.
+        // Bundle ID is `at.eggerapps.Postico` (Egger Apps is Austria-based,
+        // hence `.at`); the version is internal — `Postico 2.app` reuses
+        // the same ID.
+        rules.append(Rule(
+            id: "postico2.cache",
+            displayName: "Postico 2 Cache",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/at.eggerapps.Postico"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Postico 2 query plans, schema introspection, syntax highlighting cache.",
+            iconAsset: "postico",
+            sfSymbol: "tablecells.fill",
+            brandTint: posticoBlue,
+            toolKey: "postico",
+            item: ItemInfo(
+                description: "`~/Library/Caches/at.eggerapps.Postico/` is Postico 2's macOS standard cache directory — query-plan caches, schema introspection results, syntax-highlighting tables. Connection profiles and saved queries are NOT here (they live in `~/Library/Application Support/at.eggerapps.Postico/`) and are not affected by this rule.",
+                safetyNote: "Postico 2 rebuilds the cache on demand. First connection to each server reintrospects the schema (slight one-time delay).",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "Postico 2", url: "https://eggerapps.at/postico2/", kind: .official),
+                ]
+            )
+        ))
+
+        // ── TablePlus cache ───────────────────────────────────────────────
+        rules.append(Rule(
+            id: "tableplus.cache",
+            displayName: "TablePlus Cache",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/com.tinyapp.TablePlus"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "TablePlus schema introspection + query history caches.",
+            iconAsset: "tableplus",
+            sfSymbol: "tablecells.fill",
+            brandTint: tablePlusSlate,
+            toolKey: "tableplus",
+            item: ItemInfo(
+                description: "`~/Library/Caches/com.tinyapp.TablePlus/` is TablePlus's macOS standard cache — schema introspection, completion indexes, query result caches. Connection profiles live in `~/Library/Application Support/com.tinyapp.TablePlus/` and are not affected.",
+                safetyNote: "TablePlus rebuilds the cache lazily. Schema introspection runs again on first connection to each server.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "TablePlus", url: "https://tableplus.com/", kind: .official),
+                ]
+            )
+        ))
+
+        // ── Free-reign caches (low tier) ─────────────────────────────────
+        // DBeaver workspace metadata: logs + indexer state + Eclipse RCP
+        // bookkeeping. Connection definitions live elsewhere
+        // (`~/Library/DBeaverData/workspace6/General/.dbeaver/`) and are
+        // NOT touched by this rule.
+        rules.append(Rule(
+            id: "dbeaver.workspace-metadata",
+            displayName: "DBeaver Workspace Metadata",
+            ecosystem: .database, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/DBeaverData/workspace6/.metadata"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Eclipse RCP workspace metadata — logs, indexer state, view layouts.",
+            iconAsset: "dbeaver",
+            sfSymbol: "cylinder.split.1x2.fill",
+            brandTint: dbeaverBrown,
+            toolKey: "dbeaver",
+            item: ItemInfo(
+                description: "`~/Library/DBeaverData/workspace6/.metadata/` is the Eclipse-RCP workspace metadata DBeaver inherits from its IDE shell — `.log` files, indexer state, view-layout snapshots, and per-plugin runtime caches. Connection profiles live in a sibling `General/.dbeaver/` and are NOT included here.",
+                safetyNote: "DBeaver re-creates the workspace metadata on next launch. View layouts may need to be re-arranged once.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "DBeaver", url: "https://dbeaver.io/", kind: .official),
+                ]
+            )
+        ))
+
+        return rules
+    }()
 }

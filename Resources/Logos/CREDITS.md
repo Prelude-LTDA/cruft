@@ -9,7 +9,9 @@ Used to identify each tool whose artifacts Cruft cleans up.
   DevOps tools (`pulumi.svg`, `terraform.svg`, `helm.svg`, `kubernetes.svg`,
   `google-cloud.svg`, `github.svg`, `github-copilot.svg`, `rancher.svg`), `expo.svg`,
   `android.svg`, `selenium.svg`, `scala.svg`, `conda.svg`, the game-engine marks
-  (`unity.svg`, `unrealengine.svg`, `godot.svg`), `webkit.svg`, and the rest.
+  (`unity.svg`, `unrealengine.svg`, `godot.svg`), `webkit.svg`, the database marks
+  (`postgresql.svg`, `mysql.svg`, `mariadb.svg`, `redis.svg`, `mongodb.svg`,
+  `elasticsearch.svg`, `apache-kafka.svg` — gilbarbara's `kafka-icon.svg`), and the rest.
   Most are the `*-icon.svg` icon-only variants where available.
 - **[lobehub/lobe-icons](https://github.com/lobehub/lobe-icons)** (MIT):
   - `codex-cli.svg` — OpenAI Codex glyph (vendor-specific, distinct from the generic OpenAI mark).
@@ -17,6 +19,7 @@ Used to identify each tool whose artifacts Cruft cleans up.
 - **simple-icons** (CC0 SVG files):
   - `virtualbox.svg` — (the VirtualBox name and logo are trademarks of Oracle).
   - `podman.svg`, `pdm.svg`, `github-actions.svg` (used for `act`).
+  - `dbeaver.svg`.
 - **Project repositories** (each tool's own MIT / Apache-2.0 licensed branding asset, used
   per their identification-only conventions):
   - `opencode.svg` — [sst/opencode](https://github.com/sst/opencode)
@@ -42,6 +45,11 @@ Used to identify each tool whose artifacts Cruft cleans up.
   - `parallels.png` — <https://www.parallels.com/>
   - `sbt.svg` — <https://www.scala-sbt.org/>
   - `metal.png` — <https://developer.apple.com/metal/> (Apple framework icon).
+  - `postico.png` — <https://eggerapps.at/postico2/> (app icon, 256×256 PNG; the only published vector is a monochrome mask-icon).
+  - `dbngin.png` — <https://dbngin.com/> (DBngin is a TablePlus product; PNG is the only published format).
+  - `tableplus.png` — <https://tableplus.com/> (PNG; no SVG published).
+- **Wikimedia Commons** (project trademarks, used for identification):
+  - `apache-zookeeper.svg` — [File:Apache_ZooKeeper_logo.svg](https://commons.wikimedia.org/wiki/File:Apache_ZooKeeper_logo.svg) (Apache License 2.0 — the ZooKeeper name and mark are trademarks of the Apache Software Foundation).
 
 Tools without a distinct standalone logo (sccache, golangci-lint where it shows the Go
 gopher, pipenv, Coursier, Scala CLI, gopls, kubectl, gcloud's CLI scope, act-as-runner)

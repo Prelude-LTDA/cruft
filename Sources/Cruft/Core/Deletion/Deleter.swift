@@ -283,12 +283,24 @@ struct Deleter {
         case .nixCollectGarbage:   return "/nix/var/nix/profiles/default/bin/nix-collect-garbage -d"
         case .nixLogsRm:           return "/bin/rm -rf /nix/var/log/nix"
         case .macPortsCleanAll:    return "/opt/local/bin/port clean --all installed"
-        case .kdkRm:
-            // Per-item: shell-escape the finding's path
+        case .kdkRm, .pathRmRf:
+            // Per-item: shell-escape the finding's path. Same implementation
+            // for both — `.kdkRm` is the original case (kept for the KDK
+            // rule's clarity); `.pathRmRf` is the generic version for any
+            // rule whose finding path needs `rm -rf` under sudo.
+            //
+            // SECURITY-CRITICAL: paths can legally contain `$`, backticks,
+            // `$(...)`, `\n`, etc. on macOS. Double-quoted shell strings
+            // expand all of those — so we wrap the path in *single* quotes
+            // (no expansion at all) and use the `'\''` close/escape/reopen
+            // idiom for any literal `'` inside. The leading `--` argv
+            // terminator prevents paths starting with `-` from being
+            // interpreted as options to /bin/rm. The outer AppleScript
+            // string escape (in `runSudoBatch`) handles `\n`/`\r`/`\t`
+            // separately so they survive transit unchanged.
             let escaped = finding.presentationPath
-                .replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "\"", with: "\\\"")
-            return "/bin/rm -rf \"\(escaped)\""
+                .replacingOccurrences(of: "'", with: "'\\''")
+            return "/bin/rm -rf -- '\(escaped)'"
         }
     }
 
@@ -302,6 +314,17 @@ struct Deleter {
         var commands: [String] = []
         for f in findings {
             guard case let .shellSudo(kind) = f.action else { continue }
+            // Defense-in-depth: for path-based sudo commands, reject short
+            // paths a misconfigured rule could produce (e.g. `/`, `/opt`,
+            // `/Users`). Non-path commands (`port clean --all installed`,
+            // `nix-collect-garbage`, etc.) don't interpolate the finding's
+            // path, so the check doesn't apply to them.
+            switch kind {
+            case .kdkRm, .pathRmRf:
+                guard DenyList.isAllowedForSudo(f.presentationPath) else { continue }
+            case .nixCollectGarbage, .nixLogsRm, .macPortsCleanAll:
+                break
+            }
             let cmd = sudoShellCommand(kind: kind, finding: f)
             if seen.insert(cmd).inserted {
                 commands.append(cmd + " 2>&1")
@@ -310,9 +333,20 @@ struct Deleter {
         guard !commands.isEmpty else { return (true, nil) }
 
         let shell = commands.joined(separator: "; ")
+        // AppleScript string-literal escape. ORDER MATTERS: backslash first
+        // (so already-existing `\` get doubled before we introduce new ones
+        // via `\n`/`\r`/`\t`), then `"`, then the control chars. AppleScript
+        // strings can't contain raw newlines/CRs without breaking the parse,
+        // so we encode them as the two-character `\n` / `\r` / `\t` escape
+        // sequences, which AppleScript decodes back to LF/CR/TAB before
+        // handing the command to /bin/sh — where they're inside the path's
+        // single-quoted shell string and stay literal.
         let escaped = shell
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\t", with: "\\t")
         let script = "do shell script \"\(escaped)\" with administrator privileges"
 
         return await withCheckedContinuation { (c: CheckedContinuation<(Bool, String?), Never>) in

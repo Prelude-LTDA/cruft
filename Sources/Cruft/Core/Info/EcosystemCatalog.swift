@@ -118,5 +118,18 @@ enum EcosystemCatalog {
                 InfoLink(title: "Metal — Apple Developer", url: "https://developer.apple.com/metal/", kind: .docs),
             ]
         ),
+        EcosystemInfo(
+            ecosystem: .database,
+            displayName: "Databases",
+            tagline: "Local database server data — almost always irreplaceable user data, with a few rebuildable caches around the edges.",
+            description: "Local database servers — PostgreSQL, MySQL/MariaDB, Redis, MongoDB — store everything inside a single data directory: tables, indexes, write-ahead logs, replication state. Unlike build artifacts and dependency caches, this content is not derivable from a project source tree; it's the only copy of whatever you've inserted. Every rule in this category that targets a data directory is therefore tagged `Extreme` regen effort. The handful of cache/log entries (DB GUIs, MongoDB diagnostic rotation, etc.) are harmless and tagged accordingly. Cruft never deletes anything without your confirmation, but treat the items here as you would the contents of `~/Documents`.",
+            links: [
+                InfoLink(title: "Database — Wikipedia", url: "https://en.wikipedia.org/wiki/Database", kind: .wiki),
+                InfoLink(title: "PostgreSQL", url: "https://www.postgresql.org/", kind: .official),
+                InfoLink(title: "MySQL", url: "https://www.mysql.com/", kind: .official),
+                InfoLink(title: "Redis", url: "https://redis.io/", kind: .official),
+                InfoLink(title: "MongoDB", url: "https://www.mongodb.com/", kind: .official),
+            ]
+        ),
     ]
 }

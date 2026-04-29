@@ -88,6 +88,30 @@ struct FixedPathProbe: Sendable {
                     }
                 }
 
+            case let .fixedAbsolutePathGlob(pattern):
+                // Split the pattern into a literal parent and a filename
+                // glob (last component). `URL.deletingLastPathComponent` /
+                // `lastPathComponent` give us this for free. Files AND
+                // directories are emitted — useful for log files
+                // (`postgresql@*.log`) as well as data directories
+                // (`postgresql@*`). Dotfiles excluded so we don't surface
+                // `.DS_Store` etc.
+                let url = URL(fileURLWithPath: pattern)
+                let parent = url.deletingLastPathComponent().path
+                let filenamePattern = url.lastPathComponent
+                guard let names = try? FileManager.default.contentsOfDirectory(atPath: parent)
+                else { continue }
+                for name in names where !name.hasPrefix(".") {
+                    let matched = name.withCString { cstr in
+                        filenamePattern.withCString { pstr in
+                            fnmatch(pstr, cstr, 0) == 0
+                        }
+                    }
+                    if matched {
+                        out.append((r, URL(fileURLWithPath: "\(parent)/\(name)")))
+                    }
+                }
+
             case let .darwinCachePath(rel):
                 guard let base = Self.darwinUserCacheDir else { continue }
                 // confstr's value already ends in `/`; strip a leading `/`

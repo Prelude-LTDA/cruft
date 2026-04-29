@@ -25,6 +25,9 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
                             // kubectl / gcloud / gh / act / …
     case gameDev            // Game engines + GPU shader caches — Unity / Unreal /
                             // Godot + the global Metal AIR cache
+    case database           // PostgreSQL / MySQL / MariaDB / Redis / MongoDB —
+                            // service data dirs (irreplaceable user data) and a
+                            // few caches around DB GUIs.
 
     var id: String { rawValue }
 
@@ -54,6 +57,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .vm: "VMs & Containers"
         case .devops: "DevOps & Cloud CLIs"
         case .gameDev: "Game Dev & Shaders"
+        case .database: "Databases"
         }
     }
 
@@ -84,6 +88,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .vm: Color(red: 0x24/255, green: 0x96/255, blue: 0xED/255)
         case .devops: Color(red: 0x06/255, green: 0xB6/255, blue: 0xD4/255)  // cyan-500
         case .gameDev: Color(red: 0x8B/255, green: 0x5C/255, blue: 0xF6/255)  // violet-500
+        case .database: Color(red: 0x10/255, green: 0xB9/255, blue: 0x81/255) // emerald-500
         }
     }
 
@@ -114,6 +119,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .vm: "cube.box.fill"
         case .devops: "cloud.fill"
         case .gameDev: "gamecontroller.fill"
+        case .database: "cylinder.fill"
         }
     }
 
@@ -144,6 +150,7 @@ enum Ecosystem: String, Sendable, CaseIterable, Hashable, Identifiable, Codable 
         case .vm: "docker"
         case .devops: ""                    // per-rule override
         case .gameDev: ""                   // per-rule override (unity / unrealengine / godot)
+        case .database: ""                  // per-rule override (postgres / mysql / mariadb / …)
         }
     }
 }

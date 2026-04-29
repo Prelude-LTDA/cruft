@@ -32,6 +32,21 @@ enum DenyList {
         return true
     }
 
+    /// `isAllowed` plus extra defense-in-depth for `.shellSudo` paths
+    /// that get fed to `rm -rf`: refuse anything with fewer than 4 path
+    /// components (so `/`, `/opt`, `/Users`, `/Library/Developer`, …
+    /// are rejected even if a rule somehow produced them).
+    /// Real rules' findings always have ≥4 components — KDKs are at
+    /// `/Library/Developer/KDKs/<name>.kdk` (5), MacPorts DB dirs at
+    /// `/opt/local/var/db/<name>` (5), Homebrew at `/opt/homebrew/var/<name>`
+    /// (4) — so this only ever fires on a misconfigured rule.
+    static func isAllowedForSudo(_ path: String) -> Bool {
+        guard isAllowed(path) else { return false }
+        let std = (path as NSString).standardizingPath
+        let components = (std as NSString).pathComponents
+        return components.count >= 4
+    }
+
     /// Refuse anything whose resolved target is on a different volume than the
     /// declared project root.
     static func crossesVolumeBoundary(_ url: URL, projectRoot: URL?) -> Bool {
