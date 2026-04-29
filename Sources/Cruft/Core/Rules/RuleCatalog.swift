@@ -5429,15 +5429,18 @@ enum RuleCatalog {
         ))
 
         // ── Elasticsearch ─────────────────────────────────────────────────
-        // Homebrew formula `elastic/tap/elasticsearch-full` (the one most
-        // dev users actually have, since Elastic pulled the core formula
-        // from homebrew-core) writes data to `/opt/homebrew/var/lib/
-        // elasticsearch/`. The OSS-only tap stores at the same path.
+        // Path UNVERIFIED. Elastic pulled `elasticsearch` from homebrew-core
+        // (license change ~2021) and the `elastic/homebrew-elastic` tap was
+        // archived; the current third-party formulas in unrelated taps put
+        // data at varying paths (`var/lib/elasticsearch/`, `var/elasticsearch/`,
+        // sometimes `var/lib/elasticsearch/elasticsearch/`). Glob `elasticsearch*`
+        // covers the two most common roots in `var/lib/`. If a real install is
+        // somewhere else, the rule simply produces no findings — no harm.
         rules.append(Rule(
             id: "elasticsearch.brew-data",
             displayName: "Elasticsearch Data Directory",
             ecosystem: .database, scope: .globalCache,
-            matcher: .fixedAbsolutePath("/opt/homebrew/var/lib/elasticsearch"),
+            matcher: .fixedAbsolutePathGlob(pattern: "/opt/homebrew/var/lib/elasticsearch*"),
             action: .trash, tier: .extreme, aggregation: .none,
             notes: "Homebrew Elasticsearch — every cluster index on this node.",
             iconAsset: "elasticsearch",
@@ -5456,14 +5459,20 @@ enum RuleCatalog {
         ))
 
         // ── Apache Kafka + ZooKeeper ──────────────────────────────────────
-        // Kafka's broker stores topic data inside log segment files at
-        // `/opt/homebrew/var/lib/kafka-logs/` (named confusingly — it's
-        // not "logs" in the diagnostic sense, it's the durable topic store).
+        // Kafka's broker stores topic data inside log segment files at one
+        // of two paths depending on formula version:
+        //   - `/opt/homebrew/var/lib/kafka-logs/`        (pre-KRaft, ZK mode)
+        //   - `/opt/homebrew/var/lib/kraft-combined-logs/` (KRaft mode, 3.3+)
+        // The current homebrew-core formula does `inreplace
+        // log.dirs=/tmp/kraft-combined-logs → log.dirs=#{var}/lib/kraft-combined-logs`
+        // (verified Nov 2026). Older installs that haven't been re-set up
+        // may still have `kafka-logs/` from the ZK-mode formula. The glob
+        // `k*-logs` catches both with no false positives in practice.
         rules.append(Rule(
             id: "kafka.brew-data",
             displayName: "Kafka Broker Topic Store",
             ecosystem: .database, scope: .globalCache,
-            matcher: .fixedAbsolutePath("/opt/homebrew/var/lib/kafka-logs"),
+            matcher: .fixedAbsolutePathGlob(pattern: "/opt/homebrew/var/lib/k*-logs"),
             action: .trash, tier: .extreme, aggregation: .none,
             notes: "Homebrew Kafka — every topic's log segments.",
             iconAsset: "apache-kafka",
@@ -5471,11 +5480,12 @@ enum RuleCatalog {
             brandTint: kafkaBlack,
             toolKey: "kafka",
             item: ItemInfo(
-                description: "`/opt/homebrew/var/lib/kafka-logs/` is Kafka's `log.dirs` location — one subdirectory per topic-partition, each with `.log` segment files (the actual messages), `.index` offset indices, and `.timeindex` time-based indices. The directory name is misleading: this is the message store, not a diagnostic log.",
+                description: "`/opt/homebrew/var/lib/{kafka,kraft-combined}-logs/` is Kafka's `log.dirs` location — one subdirectory per topic-partition, each with `.log` segment files (the actual messages), `.index` offset indices, and `.timeindex` time-based indices. The name is misleading: this is the message store, not a diagnostic log. The `kafka-logs` form is the legacy ZooKeeper-mode layout; `kraft-combined-logs` is the modern KRaft-mode (Kafka 3.3+) layout that combines broker + controller state.",
                 safetyNote: "**Deletion is irreversible.** All topic data is gone. Stop the broker (`brew services stop kafka`), use Kafka MirrorMaker or `kafka-console-consumer` + reproducer to migrate first if needed.",
                 regenCommand: nil,
                 links: [
                     InfoLink(title: "Kafka — Storage Internals", url: "https://kafka.apache.org/documentation/#log", kind: .docs),
+                    InfoLink(title: "Kafka — KRaft Mode", url: "https://kafka.apache.org/documentation/#kraft", kind: .docs),
                 ]
             )
         ))
