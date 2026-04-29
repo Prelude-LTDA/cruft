@@ -59,22 +59,34 @@ struct MainWindowView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 // Floating filter bar at the top of the list — sits on a
                 // glass material so list rows blur as they scroll behind it,
-                // matching Finder's toolbar-under-scroll behavior.
+                // matching Finder's toolbar-under-scroll behavior. Hidden
+                // when `filterBarVisible` is off; toggleable via the
+                // toolbar button + View menu.
                 .safeAreaInset(edge: .top, spacing: 0) {
-                    FilterChipsBar(model: model)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(.regularMaterial)
-                        .overlay(
-                            Rectangle()
-                                .frame(height: 0.5)
-                                .foregroundStyle(.separator),
-                            alignment: .bottom
-                        )
+                    if model.filterBarVisible {
+                        FilterChipsBar(model: model)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(.regularMaterial)
+                            .overlay(
+                                Rectangle()
+                                    .frame(height: 0.5)
+                                    .foregroundStyle(.separator),
+                                alignment: .bottom
+                            )
+                            // Slide+fade from the top edge — matches how the
+                            // bar visually "lives" in that safe-area region.
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
                 }
 
-            StatusLine(model: model) {
-                model.requestDeletionOfSelection()
+            if model.statusBarVisible {
+                StatusLine(model: model) {
+                    model.requestDeletionOfSelection()
+                }
+                // Slide+fade from the bottom edge so the table grows down
+                // to fill the gap when the bar hides.
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
     }
@@ -115,6 +127,23 @@ struct MainWindowView: View {
             .help("Group by project or flat")
         }
         .customizationBehavior(.default)
+
+        ToolbarItem(id: "filter-bar", placement: .automatic) {
+            Button {
+                withAnimation(.smooth(duration: 0.25)) {
+                    model.filterBarVisible.toggle()
+                }
+            } label: {
+                Label("Filters", systemImage: "line.3.horizontal.decrease")
+            }
+            .help("Toggle filter bar")
+        }
+        .customizationBehavior(.default)
+        // Available in the toolbar customization sheet but hidden by
+        // default — the chips bar already exposes the same affordance,
+        // and the View-menu shortcut (⌘⌥F) is the primary entry point.
+        // Power users who want a one-click toolbar button can drag it in.
+        .defaultCustomization(.hidden)
 
         ToolbarSpacer(.fixed, placement: .primaryAction)
 

@@ -125,6 +125,29 @@ struct CruftCommands: Commands {
                       systemImage: "sidebar.trailing")
             }
             .keyboardShortcut("i", modifiers: [.command, .option])
+            Divider()
+            Button {
+                withAnimation(.smooth(duration: 0.25)) {
+                    model.filterBarVisible.toggle()
+                }
+            } label: {
+                Label(model.filterBarVisible ? "Hide Filters" : "Show Filters",
+                      systemImage: "line.3.horizontal.decrease")
+            }
+            .keyboardShortcut("f", modifiers: [.command, .option])
+            // Status bar toggle is menu-only by design (no toolbar button).
+            // No keyboard shortcut to keep the View menu's modifier surface
+            // tidy — power users who want one can rebind via System
+            // Settings ▸ Keyboard ▸ Keyboard Shortcuts ▸ App Shortcuts.
+            Button {
+                withAnimation(.smooth(duration: 0.25)) {
+                    model.statusBarVisible.toggle()
+                }
+            } label: {
+                Label(model.statusBarVisible ? "Hide Status Bar" : "Show Status Bar",
+                      systemImage: "inset.filled.bottomthird.rectangle")
+            }
+            Divider()
         }
     }
 }

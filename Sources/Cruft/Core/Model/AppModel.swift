@@ -125,6 +125,20 @@ final class AppModel {
             UserDefaults.standard.set(sidebarVisible, forKey: Self.sidebarKey)
         }
     }
+    /// Filter chips bar (the ecosystem-checkbox row above the results table)
+    /// visibility. Persists across launches like the other panel toggles.
+    var filterBarVisible: Bool = AppModel.loadFilterBarVisible() {
+        didSet {
+            UserDefaults.standard.set(filterBarVisible, forKey: Self.filterBarKey)
+        }
+    }
+    /// Status bar (the `StatusLine` row at the bottom of the detail pane)
+    /// visibility. Menu-only toggle — no toolbar button by design.
+    var statusBarVisible: Bool = AppModel.loadStatusBarVisible() {
+        didSet {
+            UserDefaults.standard.set(statusBarVisible, forKey: Self.statusBarKey)
+        }
+    }
     /// Whether the user has dismissed the "Where does your code live?"
     /// empty-state callout shown in the sidebar when no scan roots exist.
     /// Once dismissed, the sidebar falls back to a quiet borderless
@@ -169,6 +183,8 @@ final class AppModel {
     private static let perAppCachesKey = "regen.perAppCachesEnabled.v1"
     private static let infoPanelKey = "regen.infoPanelVisible.v1"
     private static let sidebarKey = "regen.sidebarVisible.v1"
+    private static let filterBarKey = "regen.filterBarVisible.v1"
+    private static let statusBarKey = "regen.statusBarVisible.v1"
     private static let emptyScanRootsCalloutDismissedKey = "regen.emptyScanRootsCalloutDismissed.v1"
     private static let ecosystemOrderKey = "regen.ecosystemOrder.v1"
 
@@ -236,6 +252,20 @@ final class AppModel {
         // roots are detected. `bool(forKey:)` returns false when the key
         // is unset, which is exactly what we want here.
         return UserDefaults.standard.bool(forKey: emptyScanRootsCalloutDismissedKey)
+    }
+
+    private static func loadFilterBarVisible() -> Bool {
+        // Default on — the ecosystem-filter chips are how a first-time
+        // user discovers what's actually being scanned.
+        guard UserDefaults.standard.object(forKey: filterBarKey) != nil else { return true }
+        return UserDefaults.standard.bool(forKey: filterBarKey)
+    }
+
+    private static func loadStatusBarVisible() -> Bool {
+        // Default on — the status line shows scan progress, totals, and
+        // the trash button; hiding it is a power-user preference.
+        guard UserDefaults.standard.object(forKey: statusBarKey) != nil else { return true }
+        return UserDefaults.standard.bool(forKey: statusBarKey)
     }
 
     private static func loadSidebarVisible() -> Bool {
