@@ -41,9 +41,9 @@ struct MainWindowView: View {
             set: { if !$0 { model.cancelDeletionRequest() } }
         )) {
             let items = model.pendingDeletion ?? []
-            ConfirmationSheet(items: items) {
+            ConfirmationSheet(items: items) { included in
                 model.cancelDeletionRequest()
-                Task { _ = await model.performDeletion(findings: items) }
+                Task { _ = await model.performDeletion(findings: included) }
             } cancel: {
                 model.cancelDeletionRequest()
             }
