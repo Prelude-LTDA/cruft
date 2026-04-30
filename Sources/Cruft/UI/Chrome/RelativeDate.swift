@@ -19,6 +19,11 @@ enum DateDisplay {
 
     static func relativeText(_ date: Date?) -> String {
         guard let date else { return "—" }
+        // RelativeDateTimeFormatter rounds to "in 0 sec" for moments inside
+        // the current second instead of saying "Just now". Special-case the last
+        // few seconds so freshly-written rows read naturally.
+        let delta = abs(date.timeIntervalSinceNow)
+        if delta < 5 { return "Just now" }
         return relative.localizedString(for: date, relativeTo: Date())
     }
 

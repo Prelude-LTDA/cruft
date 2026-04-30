@@ -347,10 +347,13 @@ private struct TriStateCheckbox: NSViewRepresentable {
     }
 
     func updateNSView(_ button: NSButton, context: Context) {
+        // Storing the latest state on the coordinator lets the click handler
+        // recover the *pre-click* value (AppKit mutates `sender.state` before
+        // the action selector runs).
         button.title = title
         button.state = state
         button.allowsMixedState = true
-        context.coordinator.previousState = state
+        context.coordinator.lastAppliedState = state
         context.coordinator.onToggle = onToggle
     }
 
@@ -358,15 +361,15 @@ private struct TriStateCheckbox: NSViewRepresentable {
 
     final class Coordinator: NSObject {
         var onToggle: (NSControl.StateValue) -> Void
-        var previousState: NSControl.StateValue = .off
+        var lastAppliedState: NSControl.StateValue = .off
         init(onToggle: @escaping (NSControl.StateValue) -> Void) { self.onToggle = onToggle }
         @MainActor @objc func click(_ sender: NSButton) {
             // Two-step toggle (off ↔ on); from mixed, click means "select
             // everything." NSButton's native cycle is off→on→mixed, so we
-            // override based on the state we observed before the click.
-            let next: NSControl.StateValue = previousState == .on ? .off : .on
+            // override based on the state we last applied from SwiftUI.
+            let next: NSControl.StateValue = lastAppliedState == .on ? .off : .on
             sender.state = next
-            previousState = next
+            lastAppliedState = next
             onToggle(next)
         }
     }

@@ -42,10 +42,13 @@ struct Deleter {
                         let stdPath = (finding.presentationPath as NSString).standardizingPath
                         let trashedTo = result.pathMap[finding.presentationPath]
                             ?? result.pathMap[stdPath]
-                        // If there was no error, treat every item in the batch
-                        // as successful even when we can't find its trashedTo
-                        // in the mapping (URL key fuzziness).
-                        let ok = result.error == nil
+                        // Decide per-item: presence in `pathMap` is the
+                        // authoritative signal that *this* item was trashed,
+                        // even if `result.error` flagged the batch (e.g. one
+                        // bad file in a 100-item recycle). Fall back to the
+                        // no-batch-error heuristic only when the path isn't
+                        // in the map (URL key fuzziness).
+                        let ok = (trashedTo != nil) || (result.error == nil)
                         if ok {
                             reclaimed += finding.size ?? 0
                             entries.append(HistoryEntry(

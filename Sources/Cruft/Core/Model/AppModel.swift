@@ -619,6 +619,20 @@ final class AppModel {
         var errors: [(Finding, String)] = []
         var trashed: [HistoryEntry] = []
 
+        // Optimistic removal: pull every target out of the visible list up
+        // front so the user sees the change instantly (NSWorkspace.recycle
+        // holds its completion for seconds on big batches; clean commands
+        // run for tens of seconds). Anything reported as failed gets spliced
+        // back below.
+        let targetIds = Set(findings.map { $0.id })
+        // Snapshot of the pre-removal order so we can re-derive an anchor
+        // for failed rows even if `self.findings` mutates concurrently or
+        // multiple failures arrive out of order.
+        let snapshot = self.findings
+        let restoredSelection = self.selection.intersection(targetIds)
+        self.findings.removeAll { targetIds.contains($0.id) }
+        self.selection.subtract(targetIds)
+
         for await event in deleter.delete(findings) {
             switch event {
             case .started: break
@@ -626,11 +640,22 @@ final class AppModel {
                 if success {
                     ok += 1
                     reclaimed += f.size ?? 0
-                    // Remove from model immediately.
-                    self.findings.removeAll { $0.id == f.id }
-                    self.selection.remove(f.id)
                 } else if let error {
                     errors.append((f, error))
+                    // Defense against batched success/failure reporting:
+                    // some Deleter paths (sudo batch in particular) report
+                    // every item with the batch's status, so an "error"
+                    // report can arrive for an item that actually was
+                    // deleted from disk. Don't re-insert phantom rows.
+                    guard FileManager.default.fileExists(atPath: f.presentationPath) else {
+                        ok += 1
+                        reclaimed += f.size ?? 0
+                        continue
+                    }
+                    insertAtSnapshotAnchor(f, snapshot: snapshot)
+                    if restoredSelection.contains(f.id) {
+                        self.selection.insert(f.id)
+                    }
                 }
             case .finishedAll(let r, let entries):
                 reclaimed = r
@@ -646,6 +671,35 @@ final class AppModel {
             errors: errors,
             entries: trashed
         )
+    }
+
+    /// Splice `f` back into `self.findings` at its position relative to a
+    /// pre-removal `snapshot`. Walks backwards from the failed item's
+    /// snapshot index for a still-present id to anchor after; falls back to
+    /// the first surviving successor, then to append. Robust to multiple
+    /// out-of-order failures and to concurrent mutations of `self.findings`.
+    private func insertAtSnapshotAnchor(_ f: Finding, snapshot: [Finding]) {
+        let currentIds = Set(self.findings.map { $0.id })
+        guard let snapshotIdx = snapshot.firstIndex(where: { $0.id == f.id }) else {
+            self.findings.append(f)
+            return
+        }
+        // Walk backward for a predecessor that still exists in self.findings.
+        for j in stride(from: snapshotIdx - 1, through: 0, by: -1) where currentIds.contains(snapshot[j].id) {
+            if let curIdx = self.findings.firstIndex(where: { $0.id == snapshot[j].id }) {
+                self.findings.insert(f, at: self.findings.index(after: curIdx))
+                return
+            }
+        }
+        // None found — try forward for a successor anchor.
+        for j in (snapshotIdx + 1)..<snapshot.count where currentIds.contains(snapshot[j].id) {
+            if let curIdx = self.findings.firstIndex(where: { $0.id == snapshot[j].id }) {
+                self.findings.insert(f, at: curIdx)
+                return
+            }
+        }
+        // Nothing left from the original ordering — append.
+        self.findings.append(f)
     }
 }
 
