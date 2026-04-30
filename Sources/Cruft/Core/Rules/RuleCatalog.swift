@@ -3574,8 +3574,65 @@ enum RuleCatalog {
             brandTint: Color(red: 0x10/255, green: 0xA3/255, blue: 0x7F/255),  // OpenAI green
             toolKey: "codex-cli",
             item: ItemInfo(
-                description: "`~/.codex/sessions/` stores JSONL session rollouts the OpenAI Codex CLI uses to resume prior conversations and replay tool calls. The companion `~/.codex/history.jsonl` records every prompt the user has typed.",
-                safetyNote: "Rollouts and history are local-only; deletion is permanent and breaks `codex resume`. The `CODEX_HOME` env var can relocate this directory.",
+                description: "`~/.codex/sessions/` stores JSONL session rollouts the OpenAI Codex CLI uses to resume prior conversations and replay tool calls.",
+                safetyNote: "Rollouts are local-only; deletion is permanent and breaks `codex resume`. The `CODEX_HOME` env var can relocate this directory.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "OpenAI Codex CLI", url: "https://developers.openai.com/codex/cli", kind: .official),
+                ]
+            )
+        ),
+        // Codex CLI — user-archived rollouts (TUI's `archive` action).
+        Rule(
+            id: "codex-cli.archived-sessions", displayName: "Codex CLI archived sessions",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".codex/archived_sessions"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Codex CLI rollouts the user explicitly archived from the TUI.",
+            iconAsset: "codex-cli", sfSymbol: "archivebox",
+            brandTint: Color(red: 0x10/255, green: 0xA3/255, blue: 0x7F/255),
+            toolKey: "codex-cli",
+            item: ItemInfo(
+                description: "`~/.codex/archived_sessions/` holds rollouts moved out of `sessions/` via the TUI's archive action. Same JSONL format as live rollouts.",
+                safetyNote: "Local-only and unrecoverable once deleted. The user moved these here deliberately, so treat them like the live `sessions/` directory.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "OpenAI Codex CLI", url: "https://developers.openai.com/codex/cli", kind: .official),
+                ]
+            )
+        ),
+        // Codex CLI — append-only prompt history (TUI ↑/↓ recall).
+        Rule(
+            id: "codex-cli.history", displayName: "Codex CLI prompt history",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".codex/history.jsonl"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Append-only file backing prompt-recall in the Codex TUI.",
+            iconAsset: "codex-cli", sfSymbol: "clock.arrow.circlepath",
+            brandTint: Color(red: 0x10/255, green: 0xA3/255, blue: 0x7F/255),
+            toolKey: "codex-cli",
+            item: ItemInfo(
+                description: "`~/.codex/history.jsonl` is the append-only log of every prompt typed into the Codex TUI, used for `↑`/`↓` recall across sessions. Persistence is governed by the `history.persistence` config setting.",
+                safetyNote: "Local-only; deletion is permanent and the TUI loses prompt-recall history. New entries start accumulating again on the next session.",
+                regenCommand: nil,
+                links: [
+                    InfoLink(title: "OpenAI Codex CLI", url: "https://developers.openai.com/codex/cli", kind: .official),
+                ]
+            )
+        ),
+        // Codex CLI — tracing log directory (diagnostic only).
+        Rule(
+            id: "codex-cli.logs", displayName: "Codex CLI logs",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: ".codex/log"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "Codex CLI tracing and TUI session logs.",
+            iconAsset: "codex-cli", sfSymbol: "doc.text",
+            brandTint: Color(red: 0x10/255, green: 0xA3/255, blue: 0x7F/255),
+            toolKey: "codex-cli",
+            item: ItemInfo(
+                description: "`~/.codex/log/` holds tracing logs (`codex-tui.log`) and session-log JSONL files written for diagnostic and replay purposes. Distinct from `sessions/`, which holds the resumable rollouts.",
+                safetyNote: "Diagnostic-only — not needed to resume a session. Recreated as new sessions run.",
                 regenCommand: nil,
                 links: [
                     InfoLink(title: "OpenAI Codex CLI", url: "https://developers.openai.com/codex/cli", kind: .official),
@@ -3821,6 +3878,44 @@ enum RuleCatalog {
             item: ItemInfo(
                 description: "`~/Library/Application Support/Claude/Cache/` is Claude Desktop's Chromium HTTP cache. Sibling directories (`Code Cache/`, `GPUCache/`, `DawnGraphiteCache/`, `DawnWebGPUCache/`, `Service Worker/`) follow the same lifecycle but live alongside conversation state, so this rule targets only the `Cache/` leaf.",
                 safetyNote: "Auto-rebuilt on next launch.",
+                regenCommand: nil,
+                links: []
+            )
+        ),
+        // ChatGPT macOS app — Electron-style HTTP / asset cache.
+        // The app is direct-download only (not sandboxed), so artifacts live
+        // directly under ~/Library/* — no Containers/ dir. Conversations are
+        // server-synced, so cache deletion is non-destructive.
+        Rule(
+            id: "chatgpt-app.cache", displayName: "ChatGPT App Cache",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Caches/com.openai.chat"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "ChatGPT macOS app HTTP and asset cache.",
+            sfSymbol: "bubble.left.and.bubble.right",
+            brandTint: Color(red: 0x10/255, green: 0xA3/255, blue: 0x7F/255),
+            toolKey: "chatgpt-app",
+            item: ItemInfo(
+                description: "`~/Library/Caches/com.openai.chat/` is the ChatGPT macOS app's HTTP and asset cache. Per-app WebKit subdirectories (`WebKit/NetworkCache`, `WebKit/CacheStorage`) are covered separately by the per-app WebKit rules.",
+                safetyNote: "Refetched on demand. Auth lives in cookies / Keychain, so the user stays signed in.",
+                regenCommand: nil,
+                links: []
+            )
+        ),
+        // ChatGPT macOS app — URLSession HTTP cache (separate from the .binarycookies
+        // sibling, which holds session cookies and is intentionally not targeted).
+        Rule(
+            id: "chatgpt-app.http-storage", displayName: "ChatGPT HTTP Storage",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/HTTPStorages/com.openai.chat"),
+            action: .trash, tier: .low, aggregation: .none,
+            notes: "ChatGPT macOS app URLSession HTTP cache.",
+            sfSymbol: "bubble.left.and.bubble.right",
+            brandTint: Color(red: 0x10/255, green: 0xA3/255, blue: 0x7F/255),
+            toolKey: "chatgpt-app",
+            item: ItemInfo(
+                description: "`~/Library/HTTPStorages/com.openai.chat/` holds the ChatGPT macOS app's URLSession HTTP cache. Distinct from the sibling `com.openai.chat.binarycookies/`, which stores session cookies and is deliberately left untouched.",
+                safetyNote: "Refetched on demand; cookies and credentials are stored separately and unaffected.",
                 regenCommand: nil,
                 links: []
             )
