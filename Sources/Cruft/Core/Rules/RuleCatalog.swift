@@ -3825,6 +3825,25 @@ enum RuleCatalog {
                 links: []
             )
         ),
+        // Claude Desktop — sandboxed Linux VM that backs the code-execution tool.
+        // Holds a mutable rootfs with anything the user installed or wrote inside
+        // the sandbox, so this is .extreme.
+        Rule(
+            id: "claude-desktop.vm-bundle", displayName: "Claude Desktop VM bundle",
+            ecosystem: .aiCodingAgent, scope: .globalCache,
+            matcher: .fixedPath(relativeToHome: "Library/Application Support/Claude/vm_bundles/claudevm.bundle"),
+            action: .trash, tier: .extreme, aggregation: .none,
+            notes: "Linux VM rootfs that backs Claude Desktop's sandboxed code execution.",
+            iconAsset: "claude-code", sfSymbol: "externaldrive.fill",
+            brandTint: Color(red: 0xD9/255, green: 0x77/255, blue: 0x57/255),
+            toolKey: "claude-desktop",
+            item: ItemInfo(
+                description: "`~/Library/Application Support/Claude/vm_bundles/claudevm.bundle/` is the Linux VM that Claude Desktop boots via Apple's Virtualization.framework for sandboxed code execution. The bundle holds the live mutable rootfs (`rootfs.img`), a compressed bootstrap image (`rootfs.img.zst`) used to recreate a clean rootfs, persistent session state (`sessiondata.img`), and VM bookkeeping (`efivars.fd`, `machineIdentifier`, `vmIP`, `gvisorMacAddress`).",
+                safetyNote: "The rootfs is mutable — anything installed, downloaded, or written inside the sandbox during prior conversations lives only here. Trashing the bundle is permanent for that state; Claude Desktop will rebuild a fresh VM from the bundled bootstrap image the next time the code-execution tool is used.",
+                regenCommand: nil,
+                links: []
+            )
+        ),
     ]
 
     // MARK: - Editors & IDEs
