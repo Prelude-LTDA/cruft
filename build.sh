@@ -26,6 +26,26 @@ mkdir -p "$APP_DIR/Contents/Resources"
 cp "$BIN" "$APP_DIR/Contents/MacOS/$APP_NAME"
 cp "$ROOT/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
 
+# Stamp build number + git commit into the bundled Info.plist (not the
+# source, so the working copy stays clean across builds). CFBundleVersion
+# is the count of commits on origin/main — stable across machines, only
+# advances when work actually lands upstream, and shows up as the "(N)"
+# in the standard About panel. Falls back to local main, then HEAD, for
+# fresh clones or shallow CI checkouts where origin/main isn't present.
+# PreludeGitCommit is a custom key carrying the short hash for bug
+# reports; not surfaced by the stock About panel but available at runtime
+# via Bundle.main.infoDictionary.
+BUILD_NUMBER=$(git -C "$ROOT" rev-list --count origin/main 2>/dev/null \
+    || git -C "$ROOT" rev-list --count main 2>/dev/null \
+    || git -C "$ROOT" rev-list --count HEAD 2>/dev/null \
+    || echo 1)
+GIT_COMMIT=$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)
+PLIST="$APP_DIR/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :PreludeGitCommit string $GIT_COMMIT" "$PLIST" 2>/dev/null \
+    || /usr/libexec/PlistBuddy -c "Set :PreludeGitCommit $GIT_COMMIT" "$PLIST"
+echo "→ build $BUILD_NUMBER ($GIT_COMMIT)"
+
 # Copy brand logos — most SVGs from gilbarbara/logos (MIT, see
 # Resources/Logos/CREDITS.md), plus a couple pulled from official sources
 # (pnpm.svg, lmstudio.webp).
